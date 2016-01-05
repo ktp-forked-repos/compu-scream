@@ -41,7 +41,7 @@
        (assert! (,fun ,@vars))
        (list ,@vars))))
 
-(defmacro deftest (name fun arity)
+(defmacro mk-testfun (name fun arity)
   `(defun ,name ()
      (all-values
       (solution
@@ -51,21 +51,46 @@
                 #'<
                 #'linear-force)))))
 
-(deftest not-test notv 1)
-(deftest and-test andv 2)
-(deftest nand-test nandv 2)
-(deftest nand-test3 nandv 3)
-(deftest or-test orv 2)
-(deftest nor-test norv 2)
-(deftest nor-test3 norv 3)
-(deftest xor2-test xor2v 2)
-(deftest xor3-test xor3v 3)
-(deftest xor4-test xor4v 4)
-(deftest chv-test chv 3)
-(deftest majv-test majv 3)
+(mk-testfun test-not-f notv 1)
+(mk-testfun test-and-f andv 2)
+(mk-testfun test-nand-f nandv 2)
+(mk-testfun test-nand3-f nandv 3)
+(mk-testfun test-or-f orv 2)
+(mk-testfun test-nor-f norv 2)
+(mk-testfun test-nor3-f norv 3)
+(mk-testfun test-xor2-f xor2v 2)
+(mk-testfun test-xor3-f xor3v 3)
+(mk-testfun test-xor4-f xor4v 4)
+(mk-testfun test-chv-f chv 3)
+(mk-testfun test-majv-f majv 3)
 
-;; TODO add automated test running the above functions and
-;; verifying that the results match
+(load "test.lisp")
+
+(deftest-fun test-not '((NIL)) )
+(deftest-fun test-and '((T T)) )
+(deftest-fun test-nand '((T NIL) (NIL T) (NIL NIL)) )
+(deftest-fun test-nand3 '((T T NIL) (T NIL T) (T NIL NIL) (NIL T T)
+                          (NIL T NIL) (NIL NIL T) (NIL NIL NIL)) )
+(deftest-fun test-or '((T T) (T NIL) (NIL T)) )
+(deftest-fun test-nor '((NIL NIL)) )
+(deftest-fun test-nor3 '((NIL NIL NIL)) )
+(deftest-fun test-xor2 '((T NIL) (NIL T)) )
+(deftest-fun test-xor3 '((T T T) (T NIL NIL) (NIL T NIL) (NIL NIL T)) )
+(deftest-fun test-xor4 '((T T T NIL) (T T NIL T) (T NIL T T) (T NIL NIL NIL)
+                         (NIL T T T) (NIL T NIL NIL) (NIL NIL T NIL)
+                         (NIL NIL NIL T)) )
+(deftest-fun test-chv '((T T T) (T T NIL) (NIL T T) (NIL NIL T)) )
+(deftest-fun test-majv '((T T T) (T T NIL) (T NIL T) (NIL T T)) )
+
+(deftest test-bitwise-logic ()
+  (combine-results
+   (test-not)
+   (test-and) (test-nand) (test-nand3)
+   (test-or) (test-nor) (test-nor3)
+   (test-xor2) (test-xor3) (test-xor4)
+   (test-chv) (test-majv)))
+
+(test-bitwise-logic)
 
 ;;;;;
 ;;
