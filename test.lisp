@@ -45,3 +45,6 @@
 (defmacro deftest-fun (name result)
   (let ((fun (intern (concatenate 'string (symbol-name name) "-F"))))
     `(deftest ,name () (check (equal (,fun) ,result)))))
+
+(defmacro deftest-fun-args (name fun args result)
+  `(deftest ,name () (check (equal (,fun ,@args) ,result))))

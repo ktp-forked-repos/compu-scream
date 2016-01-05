@@ -1,6 +1,9 @@
 (require :screamer)
 (in-package :screamer-user)
 
+(load "test.lisp")
+(load "utils.lisp")
+
 ;; extensions to allow gate-style logic computations
 
 (defmacro nandv (&rest v)
@@ -35,7 +38,7 @@
       (push (gensym) vars))
     vars))
 
-(defmacro mk-test-body (fun arity)
+(defmacro mk-testfun-body (fun arity)
   (let ((vars (mk-vars arity)))
     `(let ,(mapcar #'(lambda (v) (list v '(a-booleanv))) vars)
        (assert! (,fun ,@vars))
@@ -43,13 +46,15 @@
 
 (defmacro mk-testfun (name fun arity)
   `(defun ,name ()
-     (all-values
-      (solution
-       (mk-test-body ,fun ,arity)
-       (reorder #'domain-size
-                #'(lambda (x) (declare (ignore x)) nil)
-                #'<
-                #'linear-force)))))
+     (sort (mapcar #'vector->binstr
+                   (all-values
+                    (solution
+                     (mk-testfun-body ,fun ,arity)
+                     (reorder #'domain-size
+                              #'(lambda (x) (declare (ignore x)) nil)
+                              #'<
+                              #'linear-force))))
+           #'string<)))
 
 (mk-testfun test-not-f notv 1)
 (mk-testfun test-and-f andv 2)
@@ -64,25 +69,21 @@
 (mk-testfun test-chv-f chv 3)
 (mk-testfun test-majv-f majv 3)
 
-(load "test.lisp")
+(deftest-fun test-not '("0"))
+(deftest-fun test-and '("11"))
+(deftest-fun test-nand '("00" "01" "10"))
+(deftest-fun test-nand3 '("000" "001" "010" "011" "100" "101" "110"))
+(deftest-fun test-or '("01" "10" "11"))
+(deftest-fun test-nor '("00"))
+(deftest-fun test-nor3 '("000"))
+(deftest-fun test-xor2 '("01" "10") )
+(deftest-fun test-xor3 '("001" "010" "100" "111"))
+(deftest-fun test-xor4 '("0001" "0010" "0100" "0111"
+                         "1000" "1011" "1101" "1110"))
+(deftest-fun test-chv '("001" "011" "110" "111"))
+(deftest-fun test-majv '("011" "101" "110" "111"))
 
-(deftest-fun test-not '((NIL)) )
-(deftest-fun test-and '((T T)) )
-(deftest-fun test-nand '((T NIL) (NIL T) (NIL NIL)) )
-(deftest-fun test-nand3 '((T T NIL) (T NIL T) (T NIL NIL) (NIL T T)
-                          (NIL T NIL) (NIL NIL T) (NIL NIL NIL)) )
-(deftest-fun test-or '((T T) (T NIL) (NIL T)) )
-(deftest-fun test-nor '((NIL NIL)) )
-(deftest-fun test-nor3 '((NIL NIL NIL)) )
-(deftest-fun test-xor2 '((T NIL) (NIL T)) )
-(deftest-fun test-xor3 '((T T T) (T NIL NIL) (NIL T NIL) (NIL NIL T)) )
-(deftest-fun test-xor4 '((T T T NIL) (T T NIL T) (T NIL T T) (T NIL NIL NIL)
-                         (NIL T T T) (NIL T NIL NIL) (NIL NIL T NIL)
-                         (NIL NIL NIL T)) )
-(deftest-fun test-chv '((T T T) (T T NIL) (NIL T T) (NIL NIL T)) )
-(deftest-fun test-majv '((T T T) (T T NIL) (T NIL T) (NIL T T)) )
-
-(deftest test-bitwise-logic ()
+(deftest test-logic-gates ()
   (combine-results
    (test-not)
    (test-and) (test-nand) (test-nand3)
@@ -90,7 +91,57 @@
    (test-xor2) (test-xor3) (test-xor4)
    (test-chv) (test-majv)))
 
-(test-bitwise-logic)
+;; some basic circuits for digital computations
+
+(defmacro half-adder (a b c s)
+  `(progn (assert! (equalv ,s (xor2v ,a ,b)))
+          (assert! (equalv ,c (andv ,a ,b)))))
+
+(defmacro full-adder (a b ci co s)
+  `(progn (assert! (equalv ,s (xor3v ,a ,b ,ci)))
+          (assert! (equalv ,co (orv (andv ,a ,b)
+                                    (andv ,ci
+                                          (xor2v ,a ,b)))))))
+
+;; test function generators
+
+(defmacro mk-testcirc-body (fun arity)
+  (let ((vars (mk-vars arity)))
+    `(let ,(mapcar #'(lambda (v) (list v '(a-booleanv))) vars)
+       (,fun ,@vars)
+       (list ,@vars))))
+
+(defmacro mk-testcirc (name fun arity)
+  `(defun ,name ()
+     (sort (mapcar #'vector->binstr
+                   (all-values
+                    (solution
+                     (mk-testcirc-body ,fun ,arity)
+                     (reorder #'domain-size
+                              #'(lambda (x) (declare (ignore x)) nil)
+                              #'<
+                              #'linear-force))))
+           #'string<)))
+
+(mk-testcirc test-half-adder-f half-adder 4)
+(mk-testcirc test-full-adder-f full-adder 5)
+
+(deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
+(deftest-fun test-full-adder '("00000" "00101" "01001" "01110"
+                               "10001" "10110" "11010" "11111"))
+
+(deftest test-basic-circuits ()
+  (combine-results
+   (test-half-adder)
+   (test-full-adder)))
+
+(deftest test ()
+  (combine-results
+   (test-utils)
+   (test-logic-gates)
+   (test-basic-circuits)))
+
+(test)
 
 ;;;;;
 ;;
@@ -101,3 +152,29 @@
 ;;  - need support for ROTR, SHR, + (integer addition) and friends
 ;;
 ;;;;;
+
+(defun test-half-adder-generator ()
+  (all-values
+   (let ((a (a-boolean))
+         (b (a-boolean))
+         (c (a-boolean))
+         (s (a-boolean)))
+     (if (and (equalv s (xor2v a b))
+              (equalv c (andv a b)))
+         (vector->binstr (list a b s c))
+       (fail)))))
+
+(defun test-half-adder-constraint ()
+  (mapcar #'vector->binstr
+          (all-values
+           (solution
+            (let ((a (a-booleanv))
+                  (b (a-booleanv))
+                  (s (a-booleanv))
+                  (c (a-booleanv)))
+              (half-adder a b s c)
+              (list a b s c))
+            (reorder #'domain-size
+                     #'(lambda (x) (declare (ignore x)) nil)
+                     #'<
+                     #'linear-force)))))
