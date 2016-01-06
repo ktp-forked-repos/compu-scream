@@ -97,11 +97,21 @@
   `(progn (assert! (equalv ,s (xor2v ,a ,b)))
           (assert! (equalv ,c (andv ,a ,b)))))
 
+(defmacro full-adder-s (a b ci s)
+  `(assert! (equalv ,s (xor3v ,a ,b ,ci))))
+
 (defmacro full-adder (a b ci co s)
-  `(progn (assert! (equalv ,s (xor3v ,a ,b ,ci)))
+  `(progn (full-adder-s ,a ,b ,ci ,s)
           (assert! (equalv ,co (orv (andv ,a ,b)
                                     (andv ,ci
                                           (xor2v ,a ,b)))))))
+
+(defmacro rc-adder (a2 a1 a0 b2 b1 b0 s2 s1 s0)
+  `(let ((c2 (a-booleanv))
+         (c1 (a-booleanv)))
+     (half-adder   ,a0 ,b0 c1    ,s0)
+     (full-adder   ,a1 ,b1 c1 c2 ,s1)
+     (full-adder-s ,a2 ,b2 c2    ,s2)))
 
 ;; test function generators
 
@@ -125,15 +135,34 @@
 
 (mk-testcirc test-half-adder-f half-adder 4)
 (mk-testcirc test-full-adder-f full-adder 5)
+(mk-testcirc test-rc-adder-f rc-adder 9)
 
 (deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
 (deftest-fun test-full-adder '("00000" "00101" "01001" "01110"
                                "10001" "10110" "11010" "11111"))
+(deftest-fun test-rc-adder
+  '("000000000" "000001001" "000010010" "000011011"
+    "000100100" "000101101" "000110110" "000111111"
+    "001000001" "001001010" "001010011" "001011100"
+    "001100101" "001101110" "001110111" "001111000"
+    "010000010" "010001011" "010010100" "010011101"
+    "010100110" "010101111" "010110000" "010111001"
+    "011000011" "011001100" "011010101" "011011110"
+    "011100111" "011101000" "011110001" "011111010"
+    "100000100" "100001101" "100010110" "100011111"
+    "100100000" "100101001" "100110010" "100111011"
+    "101000101" "101001110" "101010111" "101011000"
+    "101100001" "101101010" "101110011" "101111100"
+    "110000110" "110001111" "110010000" "110011001"
+    "110100010" "110101011" "110110100" "110111101"
+    "111000111" "111001000" "111010001" "111011010"
+    "111100011" "111101100" "111110101" "111111110"))
 
 (deftest test-basic-circuits ()
   (combine-results
    (test-half-adder)
-   (test-full-adder)))
+   (test-full-adder)
+   (test-rc-adder)))
 
 (deftest test ()
   (combine-results
