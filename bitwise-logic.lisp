@@ -2,7 +2,9 @@
 (in-package :screamer-user)
 
 (load "test.lisp")
+(load "macros.lisp")
 (load "utils.lisp")
+(load "group.lisp")
 
 ;; extensions to allow gate-style logic computations
 
@@ -166,7 +168,9 @@
 
 (deftest test ()
   (combine-results
+   (test-macros)
    (test-utils)
+   (test-group)
    (test-logic-gates)
    (test-basic-circuits)))
 
