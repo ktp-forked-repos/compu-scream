@@ -84,10 +84,10 @@
 ;;
 (defmacro with-groups (groups &body body)
   (let ((names (mapcar #'group-name groups))
-        (vars  (mapcar #'group-var groups))
-        (minwidth (apply #'min (mapcar #'group-width groups))))
+        (vars  (mapcar #'group-var groups)))
     `(do ,(mk-with-groups-do-body groups)
-         ((>= idx ,minwidth) (nreverse body-out))
+         ((>= idx (apply #'min (mapcar #'group-width ',groups)))
+          (cons 'progn (nreverse body-out)))
        (setf body-out
              (let ,(mapcar #'(lambda (n v)
                                (list v `(mk-signal-sym ',n ,v)))
@@ -95,11 +95,10 @@
                (cons ,@body body-out))))))
 
 (defun test-with-groups-f ()
-  `(progn
-     ,@(with-groups ((:name a :var ai :start 7 :width 8 :inc -1)
-                     (:name b :start 15 :width 8 :inc -1)
-                     (:name c :start 5 :width 8 :mod 8))
-                    `(assert! (equalv ,ai (xorv ,b ,c))))))
+  (with-groups ((:name a :var ai :start 7 :width 8 :inc -1)
+                (:name b :start 15 :width 8 :inc -1)
+                (:name c :start 5 :width 8 :mod 8))
+               `(assert! (equalv ,ai (xorv ,b ,c)))))
 
 (deftest-fun-args test-with-groups
   test-with-groups-f ()

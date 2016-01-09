@@ -108,12 +108,25 @@
                                     (andv ,ci
                                           (xor2v ,a ,b)))))))
 
+; obsolete, should be removed
 (defmacro rc-adder (a2 a1 a0 b2 b1 b0 s2 s1 s0)
   `(let ((c2 (a-booleanv))
          (c1 (a-booleanv)))
      (half-adder   ,a0 ,b0 c1    ,s0)
      (full-adder   ,a1 ,b1 c1 c2 ,s1)
      (full-adder-s ,a2 ,b2 c2    ,s2)))
+
+(defmacro mk-rc-adder (w a b s)
+  `(with-groups ((:name ,a :width ,w)
+                 (:name ,b :width ,w)
+                 (:name ,s :width ,w)
+                 (:name c :var c0 :width ,w)
+                 (:name c :var c1 :width ,w :start 1))
+       (cond ((= idx 0)       `(half-adder   ,a ,b ,c1     ,s))
+             ((< idx (1- ,w)) `(full-adder   ,a ,b ,c0 ,c1 ,s))
+             (t               `(full-adder-s ,a ,b ,c0     ,s)))))
+
+(mk-rc-adder 5 a b s)
 
 ;; test function generators
 
