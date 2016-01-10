@@ -112,10 +112,67 @@
     (assert! (equalv a-1 (xorv b-9 c-3)))
     (assert! (equalv a-0 (xorv b-8 c-4)))))
 
+;; let-groups
+;; Macro to wrap body in locally defined signal groups
+
+(defun mk-index-seq (width start inc mod)
+  (do ((idx 0 (1+ idx))
+       (seq nil (cons i seq))
+       (i start (if (null mod)
+                    (+ i inc)
+                    (mod (+ i inc) mod))))
+      ((>= idx width) (nreverse seq))))
+
+(defun group-syms (g)
+  (let ((name (group-name g))
+        (seq  (mk-index-seq (group-width g)
+                            (group-start g)
+                            (group-inc g)
+                            (group-mod g))))
+    (mapcar #'(lambda (idx) (mk-signal-sym name idx)) seq)))
+
+(deftest-fun-args test-group-syms
+  group-syms ('(:name d :width 3 :start 2 :inc -1))
+  '(d-2 d-1 d-0))
+
+
+(defun group-defs (g)
+  (let ((syms (group-syms g)))
+    (mapcar #'(lambda (s) (list s '(a-booleanv))) syms)))
+
+(deftest-fun-args test-group-defs
+  group-defs ('(:name d :width 3 :start 2 :inc -1))
+  '((d-2 (a-booleanv)) (d-1 (a-booleanv)) (d-0 (a-booleanv))))
+
+
+(defmacro let-groups (groups &body body)
+  `(list 'let ',(mapcan #'group-defs groups)
+      ,@body))
+
+
+(defun test-let-groups-f ()
+  (let-groups ((:name c :width 4)
+               (:name d :width 3 :start 2 :inc -1))
+     'body))
+
+(deftest-fun-args test-let-groups
+  test-let-groups-f ()
+  '(let ((c-0 (a-booleanv))
+         (c-1 (a-booleanv))
+         (c-2 (a-booleanv))
+         (c-3 (a-booleanv))
+         (d-2 (a-booleanv))
+         (d-1 (a-booleanv))
+         (d-0 (a-booleanv)))
+     body))
+
 
 (deftest test-group ()
   (combine-results
    (test-mk-signal-sym)
    (test-group-getters)
    (test-mk-with-groups-do-body)
-   (test-with-groups)))
+   (test-with-groups)
+   (test-group-syms)
+   (test-group-defs)
+   (test-let-groups)))
