@@ -1,6 +1,19 @@
 (require :screamer)
 (in-package :screamer-user)
 
+(defun update-plist (plist indicator new-value)
+  (let ((other-properties nil))
+    (loop while plist
+          for property = (pop plist)
+          for value = (pop plist)
+          when (eq property indicator)
+          do (return-from update-plist (list* property new-value
+                                              (append other-properties plist)))
+          else do (push value other-properties)
+          (push property other-properties))
+    (list* indicator new-value other-properties)))
+
+
 (defun vector->value-int (v val)
   (if (null v)
       val
