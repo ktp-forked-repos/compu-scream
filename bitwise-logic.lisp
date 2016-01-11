@@ -163,6 +163,45 @@
              (:name b :width 8 :start 7 :inc -1)
              (:name s :width 8 :start 7 :inc -1))
 
+;; generic bit rotate operations
+(defun mk-rotate-body (a b)
+  (let ((groups (list a b)))
+    (unroll-groups groups
+       ``(assert! (equalv ,,(group-name a) ,,(group-name b))))))
+
+;; a = b << bits for MSB-first vectors
+(defmacro mk-rotate-left (name bits a b)
+  (let* ((w (apply #'min (mapcar #'group-width (list a b))))
+         (b-shifted (mod (- (group-start a) bits) w))
+         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+    `(defun ,name ,(mapcan #'group-syms (list a b))
+       ,@(eval (mk-rotate-body a b-rotated)))))
+
+;; a = b >> bits for MSB-first vectors
+(defmacro mk-rotate-right (name bits a b)
+  (let* ((w (apply #'min (mapcar #'group-width (list a b))))
+         (b-shifted (mod (+ (group-start a) bits) w))
+         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+    `(defun ,name ,(mapcan #'group-syms (list a b))
+       ,@(eval (mk-rotate-body a b-rotated)))))
+
+;; create some example functions that create adders over given groups
+
+(mk-rotate-left rotl1-8
+                1
+                (:name a :width 8 :start 7 :inc -1)
+                (:name b :width 8 :start 7 :inc -1))
+
+(mk-rotate-right rotr1-8
+                 1
+                 (:name a :width 8 :start 7 :inc -1)
+                 (:name b :width 8 :start 7 :inc -1))
+
+(mk-rotate-right rotr9-16
+                 9
+                 (:name a :width 16 :start 15 :inc -1)
+                 (:name b :width 16 :start 15 :inc -1))
+
 
 ;; test function generators
 
@@ -204,6 +243,20 @@
           (setf out (cons str out)))))
     (nreverse out)))
 
+;; compute what the output of a rotate test function should be
+(defun rotl-output (bits width)
+  (let ((n (ash 1 width))
+        (out nil))
+    (dotimes (a n)
+      (let* ((s (rotl a width bits))
+             (str (strcat (value->binstr s width)
+                          (value->binstr a width))))
+          (setf out (cons str out))))
+    (sort out #'string<)))
+
+(defun rotr-output (bits width)
+  (rotl-output (- bits) width))
+
 (mk-testcirc test-rc-adder3-f rc-adder-3 9)
 (mk-testcirc test-rc-adder4-f rc-adder-4 12)
 (mk-testcirc test-rc-adder5-f rc-adder-5 15)
@@ -218,6 +271,14 @@
 (deftest-fun test-rc-adder7 (rc-adder-output 7))
 (deftest-fun test-rc-adder8 (rc-adder-output 8))
 
+(mk-testcirc test-rotl1-8-f rotl1-8 16)
+(mk-testcirc test-rotr1-8-f rotr1-8 16)
+(mk-testcirc test-rotr9-16-f rotr9-16 32)
+
+(deftest-fun test-rotl1-8 (rotl-output 1 8))
+(deftest-fun test-rotr1-8 (rotr-output 1 8))
+(deftest-fun test-rotr9-16 (rotr-output 9 16))
+
 (deftest test-rc-adder ()
   (combine-results
    (test-rc-adder3)
@@ -227,11 +288,18 @@
    (test-rc-adder7)
    (test-rc-adder8)))
 
+(deftest test-rotlr ()
+  (combine-results
+   (test-rotl1-8)
+   (test-rotr1-8)
+   (test-rotr9-16)))
+
 (deftest test-basic-circuits ()
   (combine-results
    (test-half-adder)
    (test-full-adder)
-   (test-rc-adder)))
+   (test-rc-adder)
+   (test-rotlr)))
 
 (deftest test ()
   (combine-results

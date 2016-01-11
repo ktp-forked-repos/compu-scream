@@ -38,6 +38,8 @@
    (test-group-mod) (test-group-mod-empty)))
 
 (defun group-var! (g v) (update-plist g :var v))
+(defun group-start! (g v) (update-plist g :start v))
+(defun group-mod! (g v) (update-plist g :mod v))
 
 ;; unroll-groups helper function
 (defun mk-unroll-groups-do-body (groups)
