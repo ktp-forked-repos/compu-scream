@@ -97,7 +97,9 @@
        (let ,(mapcar #'(lambda (n v)
                          (list v `(mk-signal-sym ',n ,v)))
                      names vars)
-         (setf body-out (cons ,@body body-out))))))
+         (let ((body-form ,@body))
+           (if (not (null body-form))
+               (setf body-out (cons body-form body-out))))))))
 
 (defun test-unroll-groups-f ()
   (eval (unroll-groups '((:name a :var ai :start 7 :width 8 :inc -1)
