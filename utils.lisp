@@ -121,10 +121,40 @@
    (test-rotr-t3)
    (test-rotr-t4)))
 
+;; SHL and SHR given amount of bits on x of width w
+(defun shl (x w bits)
+  (logand (ash x bits)
+          (1- (ash 1 w))))
+
+(defun shr (x w bits)
+  (shl x w (- bits)))
+
+(deftest-fun-args test-shl-t1 shl (3 4 1) 6)
+(deftest-fun-args test-shl-t2 shl (3 4 2) 12)
+(deftest-fun-args test-shl-t3 shl (3 4 3) 8)
+(deftest-fun-args test-shl-t4 shl (3 4 4) 0)
+(deftest-fun-args test-shr-t1 shr (123 8 1) 61)
+(deftest-fun-args test-shr-t2 shr (123 8 2) 30)
+(deftest-fun-args test-shr-t3 shr (123 8 3) 15)
+(deftest-fun-args test-shr-t4 shr (123 8 4) 7)
+
+(deftest test-shift ()
+  (combine-results
+   (test-shl-t1)
+   (test-shl-t2)
+   (test-shl-t3)
+   (test-shl-t4)
+   (test-shr-t1)
+   (test-shr-t2)
+   (test-shr-t3)
+   (test-shr-t4)))
+
+
 (deftest test-utils ()
   (combine-results
    (test-vecval)
    (test-vecbin)
    (test-vechex)
    (test-valstr)
-   (test-rot)))
+   (test-rot)
+   (test-shift)))
