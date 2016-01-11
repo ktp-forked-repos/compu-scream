@@ -88,9 +88,43 @@
    (test-valhex-t1)
    (test-valhex-t2)))
 
+;; ROTL and ROTR given amount of bits on x of width w
+(defun rotl (x w bits)
+  (logior (logand (ash x (mod bits w))
+                  (1- (ash 1 w)))
+          (logand (ash x (- (- w (mod bits w))))
+                  (1- (ash 1 w)))))
+
+(defun rotr (x w bits)
+  (logior (logand (ash x (- (mod bits w)))
+                  (1- (ash 1 w)))
+          (logand (ash x (- w (mod bits w)))
+                  (1- (ash 1 w)))))
+
+(deftest-fun-args test-rotl-t1 rotl (3 4 1) 6)
+(deftest-fun-args test-rotl-t2 rotl (3 4 2) 12)
+(deftest-fun-args test-rotl-t3 rotl (3 4 3) 9)
+(deftest-fun-args test-rotl-t4 rotl (3 4 4) 3)
+(deftest-fun-args test-rotr-t1 rotr (123 8 1) 189)
+(deftest-fun-args test-rotr-t2 rotr (123 8 2) 222)
+(deftest-fun-args test-rotr-t3 rotr (123 8 3) 111)
+(deftest-fun-args test-rotr-t4 rotr (123 8 4) 183)
+
+(deftest test-rot ()
+  (combine-results
+   (test-rotl-t1)
+   (test-rotl-t2)
+   (test-rotl-t3)
+   (test-rotl-t4)
+   (test-rotr-t1)
+   (test-rotr-t2)
+   (test-rotr-t3)
+   (test-rotr-t4)))
+
 (deftest test-utils ()
   (combine-results
    (test-vecval)
    (test-vecbin)
    (test-vechex)
-   (test-valstr)))
+   (test-valstr)
+   (test-rot)))
