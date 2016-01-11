@@ -18,6 +18,9 @@
     :initial-contents (mapcar #'(lambda (b) (if b #\1 #\0)) v)))
 (defun vector->hexstr (v) (format nil "~x" (vector->value v)))
 
+(defun value->binstr (value bits) (format nil "~v,'0b" bits value))
+(defun value->hexstr (value bits) (format nil "~v,'0x" (/ bits 4) value))
+
 (deftest-fun-args test-vecval-t1 vector->value ('()) 0)
 (deftest-fun-args test-vecval-t2 vector->value ('(nil)) 0)
 (deftest-fun-args test-vecval-t3 vector->value ('(nil nil)) 0)
@@ -35,6 +38,11 @@
 (deftest-fun-args test-vechex-t2 vector->hexstr ('(t t nil t)) "D")
 (deftest-fun-args test-vechex-t3 vector->hexstr ('(t t t t t t)) "3F")
 (deftest-fun-args test-vechex-t4 vector->hexstr ('(t t nil nil t)) "19")
+
+(deftest-fun-args test-valbin-t1 value->binstr (24 8) "00011000")
+(deftest-fun-args test-valbin-t2 value->binstr (124 16) "0000000001111100")
+(deftest-fun-args test-valhex-t1 value->hexstr (1696 16) "06A0")
+(deftest-fun-args test-valhex-t2 value->hexstr (4239987432 32) "FCB912E8")
 
 (deftest test-vecval ()
   (combine-results
@@ -60,8 +68,16 @@
    (test-vechex-t3)
    (test-vechex-t4)))
 
+(deftest test-valstr ()
+  (combine-results
+   (test-valbin-t1)
+   (test-valbin-t2)
+   (test-valhex-t1)
+   (test-valhex-t2)))
+
 (deftest test-utils ()
   (combine-results
    (test-vecval)
    (test-vecbin)
-   (test-vechex)))
+   (test-vechex)
+   (test-valstr)))
