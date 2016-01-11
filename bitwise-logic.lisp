@@ -168,7 +168,7 @@
     (unroll-groups groups
        ``(assert! (equalv ,,(group-name a) ,,(group-name b))))))
 
-;; a = b << bits for MSB-first vectors
+;; a = ROTL^bits(b) for MSB-first vectors
 (defmacro mk-rotate-left (name bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
          (b-shifted (mod (- (group-start a) bits) w))
@@ -176,7 +176,7 @@
     `(defun ,name ,(mapcan #'group-syms (list a b))
        ,@(eval (mk-rotate-body a b-rotated)))))
 
-;; a = b >> bits for MSB-first vectors
+;; a = ROTR^bits(b) for MSB-first vectors
 (defmacro mk-rotate-right (name bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
          (b-shifted (mod (+ (group-start a) bits) w))
@@ -201,6 +201,62 @@
                  (:name a :width 16 :start 15 :inc -1)
                  (:name b :width 16 :start 15 :inc -1))
 
+
+;; generic bit shift operations
+(defun mk-shift-left-body (bits a b)
+  (let ((groups (list a b)))
+    (unroll-groups groups
+       `(cond ((>= idx ,bits) `(assert! (equalv ,,(group-var a) nil)))
+              (t              `(assert! (equalv ,,(group-var a)
+                                                ,,(group-var b))))))))
+
+(defun mk-shift-right-body (bits a b)
+  (let ((groups (list a b)))
+    (unroll-groups groups
+      `(cond ((< idx ,bits) `(assert! (equalv ,,(group-var a) nil)))
+             (t             `(assert! (equalv ,,(group-var a)
+                                              ,,(group-var b))))))))
+
+;; a = b << bits for MSB-first vectors
+(defmacro mk-shift-left (name bits a b)
+  (let* ((w (apply #'min (mapcar #'group-width (list a b))))
+         (b-shifted (mod (- (group-start a) bits) w))
+         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+    `(defun ,name ,(mapcan #'group-syms (list a b))
+       ,@(eval (mk-shift-left-body (- w bits) a b-rotated)))))
+
+;; a = b >> bits for MSB-first vectors
+(defmacro mk-shift-right (name bits a b)
+  (let* ((w (apply #'min (mapcar #'group-width (list a b))))
+         (b-shifted (mod (+ (group-start a) bits) w))
+         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+    `(defun ,name ,(mapcan #'group-syms (list a b))
+       ,@(eval (mk-shift-right-body bits a b-rotated)))))
+
+(mk-shift-left shl1-4
+               1
+               (:name y :width 4 :start 3 :inc -1)
+               (:name x :width 4 :start 3 :inc -1))
+
+(mk-shift-left shl1-8
+               1
+               (:name y :width 8 :start 7 :inc -1)
+               (:name x :width 8 :start 7 :inc -1))
+
+(mk-shift-right shr1-8
+                1
+                (:name y :width 8 :start 7 :inc -1)
+                (:name x :width 8 :start 7 :inc -1))
+
+(mk-shift-left shl7-16
+               7
+               (:name y :width 16 :start 15 :inc -1)
+               (:name x :width 16 :start 15 :inc -1))
+
+(mk-shift-right shr9-16
+                9
+                (:name y :width 16 :start 15 :inc -1)
+                (:name x :width 16 :start 15 :inc -1))
 
 ;; test function generators
 
@@ -256,6 +312,21 @@
 (defun rotr-output (bits width)
   (rotl-output (- bits) width))
 
+;; compute what the output of a shift test function should be
+(defun shl-output (bits width)
+  (let ((n (ash 1 width))
+        (out nil))
+    (dotimes (a n)
+      (let* ((s (shl a width bits))
+             (str (strcat (value->binstr s width)
+                          (value->binstr a width))))
+          (setf out (cons str out))))
+    (sort out #'string<)))
+
+(defun shr-output (bits width)
+  (shl-output (- bits) width))
+
+
 (mk-testcirc test-rc-adder3-f rc-adder-3 9)
 (mk-testcirc test-rc-adder4-f rc-adder-4 12)
 (mk-testcirc test-rc-adder5-f rc-adder-5 15)
@@ -278,6 +349,20 @@
 (deftest-fun test-rotr1-8 (rotr-output 1 8))
 (deftest-fun test-rotr9-16 (rotr-output 9 16))
 
+
+(mk-testcirc test-shl1-4-f shl1-4 8)
+(mk-testcirc test-shl1-8-f shl1-8 16)
+(mk-testcirc test-shr1-8-f shr1-8 16)
+(mk-testcirc test-shl7-16-f shl7-16 32)
+(mk-testcirc test-shr9-16-f shr9-16 32)
+
+(deftest-fun test-shl1-4 (shl-output 1 4))
+(deftest-fun test-shl1-8 (shl-output 1 8))
+(deftest-fun test-shr1-8 (shr-output 1 8))
+(deftest-fun test-shl7-16 (shl-output 7 16))
+(deftest-fun test-shr9-16 (shr-output 9 16))
+
+
 (deftest test-rc-adder ()
   (combine-results
    (test-rc-adder3)
@@ -293,12 +378,21 @@
    (test-rotr1-8)
    (test-rotr9-16)))
 
+(deftest test-shlr ()
+  (combine-results
+   (test-shl1-4)
+   (test-shl1-8)
+   (test-shr1-8)
+   (test-shl7-16)
+   (test-shr9-16)))
+
 (deftest test-basic-circuits ()
   (combine-results
    (test-half-adder)
    (test-full-adder)
    (test-rc-adder)
-   (test-rotlr)))
+   (test-rotlr)
+   (test-shlr)))
 
 (deftest test ()
   (combine-results
