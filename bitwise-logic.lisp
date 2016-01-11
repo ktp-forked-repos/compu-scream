@@ -122,15 +122,14 @@
 
 (defmacro mk-rc-adder (name a b s)
   (let* ((w (apply #'min (mapcar #'group-width (list a b s))))
-         (c (gensym))
-         (body (eval (mk-rc-adder-body w
-                                       (group-name a)
-                                       (group-name b)
-                                       c
-                                       (group-name s)))))
+         (c (gensym)))
     `(defun ,name ,(mapcan #'group-syms (list a b s))
        (let ,(group-defs `(:name ,c :start 1 :width ,(1- w)))
-          ,@body))))
+          ,@(eval (mk-rc-adder-body w
+                                    (group-name a)
+                                    (group-name b)
+                                    c
+                                    (group-name s)))))))
 
 ;; create some example functions that create adders over given groups
 (mk-rc-adder rc-adder-3
