@@ -37,8 +37,10 @@
    (test-group-inc) (test-group-inc-empty)
    (test-group-mod) (test-group-mod-empty)))
 
-;; with-groups helper macro
-(defun mk-with-groups-do-body (groups)
+(defun group-var! (g v) (update-plist g :var v))
+
+;; unroll-groups helper function
+(defun mk-unroll-groups-do-body (groups)
   (append
    `((body-out nil)
      (idx 0 (incf idx)))
@@ -52,16 +54,16 @@
                                     `(mod (+ ,var ,inc) ,mod)))))
            groups)))
 
-(deftest-fun-args test-mk-with-groups-do-body
-  mk-with-groups-do-body ( '((:name a :start 0 :width 7)
-                             (:name b :start 7 :inc -1 :mod 8)) )
+(deftest-fun-args test-mk-unroll-groups-do-body
+  mk-unroll-groups-do-body ( '((:name a :start 0 :width 7)
+                               (:name b :start 7 :inc -1 :mod 8)) )
   '((body-out nil)
     (idx 0 (incf idx))
     (a 0 (+ a 1))
     (b 7 (mod (+ b -1) 8))) )
 
-;; Macro to define macros or functions that operate on logic vectors
-;; called groups. The macro generates code that needs to be evaluated
+;; Function to define macros or functions that operate on logic vectors
+;; called groups. The function generates code that needs to be evaluated
 ;; to generate the desired form expansion and substitution.
 ;;
 ;; Syntax:
@@ -82,28 +84,28 @@
 ;;   - Group widths don't have to be the same; the smallest one
 ;;     will be used.
 ;;
-(defmacro with-groups (groups &body body)
+(defun unroll-groups (groups &rest body)
   (let ((names (mapcar #'group-name groups))
-        (vars  (mapcar #'group-var groups)))
-    `(do ,(mk-with-groups-do-body groups)
-         ((>= idx (apply #'min (mapcar #'group-width ',groups)))
-          (cons 'progn (nreverse body-out)))
-       (setf body-out
-             (let ,(mapcar #'(lambda (n v)
-                               (list v `(mk-signal-sym ',n ,v)))
-                           names vars)
-               (cons ,@body body-out))))))
+        (vars  (mapcar #'group-var groups))
+        (width (apply #'min (mapcar #'group-width groups)))
+        (do-body (mk-unroll-groups-do-body groups)))
+    `(do ,do-body
+         ((>= idx ,width)
+          (nreverse body-out))
+       (let ,(mapcar #'(lambda (n v)
+                         (list v `(mk-signal-sym ',n ,v)))
+                     names vars)
+         (setf body-out (cons ,@body body-out))))))
 
-(defun test-with-groups-f ()
-  (with-groups ((:name a :var ai :start 7 :width 8 :inc -1)
-                (:name b :start 15 :width 8 :inc -1)
-                (:name c :start 5 :width 8 :mod 8))
-               `(assert! (equalv ,ai (xorv ,b ,c)))))
+(defun test-unroll-groups-f ()
+  (eval (unroll-groups '((:name a :var ai :start 7 :width 8 :inc -1)
+                         (:name b :start 15 :width 8 :inc -1)
+                         (:name c :start 5 :width 8 :mod 8))
+                       '`(assert! (equalv ,ai (xorv ,b ,c))))))
 
-(deftest-fun-args test-with-groups
-  test-with-groups-f ()
-  '(progn
-    (assert! (equalv a-7 (xorv b-15 c-5)))
+(deftest-fun-args test-unroll-groups
+  test-unroll-groups-f ()
+  '((assert! (equalv a-7 (xorv b-15 c-5)))
     (assert! (equalv a-6 (xorv b-14 c-6)))
     (assert! (equalv a-5 (xorv b-13 c-7)))
     (assert! (equalv a-4 (xorv b-12 c-0)))
@@ -146,33 +148,30 @@
 
 
 (defmacro let-groups (groups &body body)
-  `(list 'let ',(mapcan #'group-defs groups)
+  `(let ,(mapcan #'group-defs groups)
       ,@body))
 
-
-(defun test-let-groups-f ()
-  (let-groups ((:name c :width 4)
-               (:name d :width 3 :start 2 :inc -1))
-     'body))
-
-(deftest-fun-args test-let-groups
-  test-let-groups-f ()
-  '(let ((c-0 (a-booleanv))
-         (c-1 (a-booleanv))
-         (c-2 (a-booleanv))
-         (c-3 (a-booleanv))
-         (d-2 (a-booleanv))
-         (d-1 (a-booleanv))
-         (d-0 (a-booleanv)))
-     body))
+;; (mac (let-groups ((:name c :width 4)
+;;                   (:name d :width 3 :start 2 :inc -1))
+;;          body))
+;;
+;; --->
+;;
+;; (let ((c-0 (a-booleanv))
+;;       (c-1 (a-booleanv))
+;;       (c-2 (a-booleanv))
+;;       (c-3 (a-booleanv))
+;;       (d-2 (a-booleanv))
+;;       (d-1 (a-booleanv))
+;;       (d-0 (a-booleanv)))
+;;   body)
 
 
 (deftest test-group ()
   (combine-results
    (test-mk-signal-sym)
    (test-group-getters)
-   (test-mk-with-groups-do-body)
-   (test-with-groups)
+   (test-mk-unroll-groups-do-body)
+   (test-unroll-groups)
    (test-group-syms)
-   (test-group-defs)
-   (test-let-groups)))
+   (test-group-defs)))
