@@ -153,7 +153,7 @@
 
 (defmacro let-groups (groups &body body)
   `(let ,(mapcan #'group-defs groups)
-      ,@body))
+     ,@body))
 
 ;; (mac (let-groups ((:name c :width 4)
 ;;                   (:name d :width 3 :start 2 :inc -1))
@@ -170,6 +170,8 @@
 ;;       (d-0 (a-booleanv)))
 ;;   body)
 
+(defmacro std-logic-vector (name width)
+  `(list :name ,name :width ,width :start ,(1- width) :inc -1))
 
 (deftest test-group ()
   (combine-results
