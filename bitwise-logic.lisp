@@ -132,11 +132,36 @@
        (let ,(group-defs `(:name ,c :start 1 :width ,(1- w)))
           ,@body))))
 
-;; create a function that creates a 3-bit adder over given groups
+;; create some example functions that create adders over given groups
 (mk-rc-adder rc-adder-3
              (:name x :width 3 :start 2 :inc -1)
              (:name y :width 3 :start 2 :inc -1)
              (:name r :width 3 :start 2 :inc -1))
+
+(mk-rc-adder rc-adder-4
+             (:name a :width 4 :start 3 :inc -1)
+             (:name b :width 4 :start 3 :inc -1)
+             (:name s :width 4 :start 3 :inc -1))
+
+(mk-rc-adder rc-adder-5
+             (:name a :width 5 :start 4 :inc -1)
+             (:name b :width 5 :start 4 :inc -1)
+             (:name s :width 5 :start 4 :inc -1))
+
+(mk-rc-adder rc-adder-6
+             (:name a :width 6 :start 5 :inc -1)
+             (:name b :width 6 :start 5 :inc -1)
+             (:name s :width 6 :start 5 :inc -1))
+
+(mk-rc-adder rc-adder-7
+             (:name a :width 7 :start 6 :inc -1)
+             (:name b :width 7 :start 6 :inc -1)
+             (:name s :width 7 :start 6 :inc -1))
+
+(mk-rc-adder rc-adder-8
+             (:name a :width 8 :start 7 :inc -1)
+             (:name b :width 8 :start 7 :inc -1)
+             (:name s :width 8 :start 7 :inc -1))
 
 
 ;; test function generators
@@ -161,34 +186,52 @@
 
 (mk-testcirc test-half-adder-f half-adder 4)
 (mk-testcirc test-full-adder-f full-adder 5)
-(mk-testcirc test-rc-adder3-f rc-adder-3 9)
 
 (deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
 (deftest-fun test-full-adder '("00000" "00101" "01001" "01110"
                                "10001" "10110" "11010" "11111"))
-(deftest-fun test-rc-adder3
-  '("000000000" "000001001" "000010010" "000011011"
-    "000100100" "000101101" "000110110" "000111111"
-    "001000001" "001001010" "001010011" "001011100"
-    "001100101" "001101110" "001110111" "001111000"
-    "010000010" "010001011" "010010100" "010011101"
-    "010100110" "010101111" "010110000" "010111001"
-    "011000011" "011001100" "011010101" "011011110"
-    "011100111" "011101000" "011110001" "011111010"
-    "100000100" "100001101" "100010110" "100011111"
-    "100100000" "100101001" "100110010" "100111011"
-    "101000101" "101001110" "101010111" "101011000"
-    "101100001" "101101010" "101110011" "101111100"
-    "110000110" "110001111" "110010000" "110011001"
-    "110100010" "110101011" "110110100" "110111101"
-    "111000111" "111001000" "111010001" "111011010"
-    "111100011" "111101100" "111110101" "111111110"))
+
+;; compute what the output of an adder test function should be
+(defun rc-adder-output (width)
+  (let ((n (ash 1 width))
+        (out nil))
+    (dotimes (a n)
+      (dotimes (b n)
+        (let* ((s (mod (+ a b) n))
+               (str (strcat (value->binstr a width)
+                            (value->binstr b width)
+                            (value->binstr s width))))
+          (setf out (cons str out)))))
+    (nreverse out)))
+
+(mk-testcirc test-rc-adder3-f rc-adder-3 9)
+(mk-testcirc test-rc-adder4-f rc-adder-4 12)
+(mk-testcirc test-rc-adder5-f rc-adder-5 15)
+(mk-testcirc test-rc-adder6-f rc-adder-6 18)
+(mk-testcirc test-rc-adder7-f rc-adder-7 21)
+(mk-testcirc test-rc-adder8-f rc-adder-8 24)
+
+(deftest-fun test-rc-adder3 (rc-adder-output 3))
+(deftest-fun test-rc-adder4 (rc-adder-output 4))
+(deftest-fun test-rc-adder5 (rc-adder-output 5))
+(deftest-fun test-rc-adder6 (rc-adder-output 6))
+(deftest-fun test-rc-adder7 (rc-adder-output 7))
+(deftest-fun test-rc-adder8 (rc-adder-output 8))
+
+(deftest test-rc-adder ()
+  (combine-results
+   (test-rc-adder3)
+   (test-rc-adder4)
+   (test-rc-adder5)
+   (test-rc-adder6)
+   (test-rc-adder7)
+   (test-rc-adder8)))
 
 (deftest test-basic-circuits ()
   (combine-results
    (test-half-adder)
    (test-full-adder)
-   (test-rc-adder3)))
+   (test-rc-adder)))
 
 (deftest test ()
   (combine-results
