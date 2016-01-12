@@ -5,6 +5,7 @@
 (load "macros.lisp")
 (load "utils.lisp")
 (load "group.lisp")
+(load "solver.lisp")
 
 ;; extensions to allow gate-style logic computations
 
@@ -34,29 +35,12 @@
 
 ;; test function generators
 
-(defun mk-vars (arity)
-  (let ((vars nil))
-    (dotimes (i arity)
-      (push (gensym) vars))
-    vars))
-
-(defmacro mk-testfun-body (fun arity)
-  (let ((vars (mk-vars arity)))
-    `(let ,(mapcar #'(lambda (v) (list v '(a-booleanv))) vars)
-       (assert! (,fun ,@vars))
-       (list ,@vars))))
-
 (defmacro mk-testfun (name fun arity)
-  `(defun ,name ()
-     (sort (mapcar #'vector->binstr
-                   (all-values
-                    (solution
-                     (mk-testfun-body ,fun ,arity)
-                     (reorder #'domain-size
-                              #'(lambda (x) (declare (ignore x)) nil)
-                              #'<
-                              #'linear-force))))
-           #'string<)))
+  (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
+    `(def-solver ,name
+       all-values
+       (,group)
+       (assert! (,fun ,@(group-syms group))))))
 
 (mk-testfun test-not-f notv 1)
 (mk-testfun test-and-f andv 2)
@@ -260,23 +244,12 @@
 
 ;; test function generators
 
-(defmacro mk-testcirc-body (fun arity)
-  (let ((vars (mk-vars arity)))
-    `(let ,(mapcar #'(lambda (v) (list v '(a-booleanv))) vars)
-       (,fun ,@vars)
-       (list ,@vars))))
-
 (defmacro mk-testcirc (name fun arity)
-  `(defun ,name ()
-     (sort (mapcar #'vector->binstr
-                   (all-values
-                    (solution
-                     (mk-testcirc-body ,fun ,arity)
-                     (reorder #'domain-size
-                              #'(lambda (x) (declare (ignore x)) nil)
-                              #'<
-                              #'linear-force))))
-           #'string<)))
+  (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
+    `(def-solver ,name
+       all-values
+       (,group)
+       (,fun ,@(group-syms group)))))
 
 (mk-testcirc test-half-adder-f half-adder 4)
 (mk-testcirc test-full-adder-f full-adder 5)
@@ -485,8 +458,6 @@
   (assert! (equalv a-2 t))
   (assert! (equalv a-0 t)))
 
-
-
 ;; An example where we
 ;; - declare two groups,
 ;; - constrain them to a certain logical relation,
@@ -524,33 +495,32 @@
       (:name c :width 4 :start 3 :inc -1)
       "a"))
 
-(defun example-body ()
-  (let-groups ((:name a :width 4 :start 3 :inc -1)
-               (:name b :width 4 :start 3 :inc -1)
-               (:name s :width 4 :start 3 :inc -1))
-     (mk-rc-adder-w/o-defun (:name a :width 4 :start 3 :inc -1)
-                            (:name b :width 4 :start 3 :inc -1)
-                            (:name s :width 4 :start 3 :inc -1))
-     (mk-binding-bin-w/o (:name a :width 4 :start 3 :inc -1) "x1:01")
-     (mk-binding-hex-w/o (:name b :width 4 :start 3 :inc -1) "A")
-     (mk-binding-bin-w/o (:name s :width 4 :start 3 :inc -1) "xx:xx")
+(def-solver example
+  all-values
+  ((:name a :width 4 :start 3 :inc -1)
+   (:name b :width 4 :start 3 :inc -1)
+   (:name s :width 4 :start 3 :inc -1))
 
-     (list-groups (:name a :width 4 :start 3 :inc -1)
-                  (:name b :width 4 :start 3 :inc -1)
-                  (:name s :width 4 :start 3 :inc -1))))
+  ;; TODO from this point, write a instead of (:name a ...)
+  (mk-rc-adder-w/o-defun (:name a :width 4 :start 3 :inc -1)
+                         (:name b :width 4 :start 3 :inc -1)
+                         (:name s :width 4 :start 3 :inc -1))
+  (mk-binding-bin-w/o (:name a :width 4 :start 3 :inc -1) "x1:01")
+  (mk-binding-hex-w/o (:name b :width 4 :start 3 :inc -1) "A")
+  (mk-binding-bin-w/o (:name s :width 4 :start 3 :inc -1) "xx:xx"))
 
-(defun example ()
-  (sort (mapcar #'vector->binstr
-                (all-values
-                 (solution
-                  (example-body)
-                  (reorder #'domain-size
-                           #'(lambda (x) (declare (ignore x)) nil)
-                           #'<
-                           #'linear-force))))
-        #'string<))
+(example)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def-solver rc-adder-single-value
+  one-value
+  ((:name x :width 3 :start 2 :inc -1)
+   (:name y :width 3 :start 2 :inc -1)
+   (:name z :width 3 :start 2 :inc -1))
+  (mk-rc-adder-w/o-defun (:name x :width 3 :start 2 :inc -1)
+                         (:name y :width 3 :start 2 :inc -1)
+                         (:name z :width 3 :start 2 :inc -1)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun test-half-adder-generator ()
   (all-values
