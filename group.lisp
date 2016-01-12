@@ -85,27 +85,31 @@
 ;;   - A non-nil :mod is useful to generate bit rotation patterns.
 ;;   - Group widths don't have to be the same; the smallest one
 ;;     will be used.
+;;   - If the evaluation of forms yields nil for any index, that
+;;     will be omitted from the output. So the number of expansions
+;;     may be less than the minimum group width.
 ;;
-(defun unroll-groups (groups &rest body)
+(defun unroll-groups (groups &rest forms)
   (let ((names (mapcar #'group-name groups))
         (vars  (mapcar #'group-var groups))
         (width (apply #'min (mapcar #'group-width groups)))
         (do-body (mk-unroll-groups-do-body groups)))
-    `(do ,do-body
-         ((>= idx ,width)
-          (nreverse body-out))
-       (let ,(mapcar #'(lambda (n v)
-                         (list v `(mk-signal-sym ',n ,v)))
-                     names vars)
-         (let ((body-form ,@body))
-           (if (not (null body-form))
-               (setf body-out (cons body-form body-out))))))))
+    (let ((body `(do ,do-body
+                     ((>= idx ,width)
+                      (nreverse body-out))
+                   (let ,(mapcar #'(lambda (n v)
+                                     (list v `(mk-signal-sym ',n ,v)))
+                                 names vars)
+                     (let ((body-form ,@forms))
+                       (if (not (null body-form))
+                           (setf body-out (cons body-form body-out))))))))
+      (eval body))))
 
 (defun test-unroll-groups-f ()
-  (eval (unroll-groups '((:name a :var ai :start 7 :width 8 :inc -1)
-                         (:name b :start 15 :width 8 :inc -1)
-                         (:name c :start 5 :width 8 :mod 8))
-                       '`(assert! (equalv ,ai (xorv ,b ,c))))))
+  (unroll-groups '((:name a :var ai :start 7 :width 8 :inc -1)
+                   (:name b :start 15 :width 8 :inc -1)
+                   (:name c :start 5 :width 8 :mod 8))
+                 '`(assert! (equalv ,ai (xorv ,b ,c)))))
 
 (deftest-fun-args test-unroll-groups
   test-unroll-groups-f ()

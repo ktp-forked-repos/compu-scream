@@ -125,11 +125,11 @@
          (c (gensym)))
     `(defun ,name ,(mapcan #'group-syms (list a b s))
        (let ,(group-defs `(:name ,c :start 1 :width ,(1- w)))
-          ,@(eval (mk-rc-adder-body w
-                                    (group-name a)
-                                    (group-name b)
-                                    c
-                                    (group-name s)))))))
+          ,@(mk-rc-adder-body w
+                              (group-name a)
+                              (group-name b)
+                              c
+                              (group-name s))))))
 
 ;; create some example functions that create adders over given groups
 (mk-rc-adder rc-adder-3
@@ -174,7 +174,7 @@
          (b-shifted (mod (- (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(defun ,name ,(mapcan #'group-syms (list a b))
-       ,@(eval (mk-rotate-body a b-rotated)))))
+       ,@(mk-rotate-body a b-rotated))))
 
 ;; a = ROTR^bits(b) for MSB-first vectors
 (defmacro mk-rotate-right (name bits a b)
@@ -182,7 +182,7 @@
          (b-shifted (mod (+ (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(defun ,name ,(mapcan #'group-syms (list a b))
-       ,@(eval (mk-rotate-body a b-rotated)))))
+       ,@(mk-rotate-body a b-rotated))))
 
 ;; create some example functions that create adders over given groups
 
@@ -223,7 +223,7 @@
          (b-shifted (mod (- (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(defun ,name ,(mapcan #'group-syms (list a b))
-       ,@(eval (mk-shift-left-body (- w bits) a b-rotated)))))
+       ,@(mk-shift-left-body (- w bits) a b-rotated))))
 
 ;; a = b >> bits for MSB-first vectors
 (defmacro mk-shift-right (name bits a b)
@@ -231,7 +231,7 @@
          (b-shifted (mod (+ (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(defun ,name ,(mapcan #'group-syms (list a b))
-       ,@(eval (mk-shift-right-body bits a b-rotated)))))
+       ,@(mk-shift-right-body bits a b-rotated))))
 
 (mk-shift-left shl1-4
                1
@@ -460,12 +460,12 @@
 (defmacro mk-binding-bin (name a bindstr)
   (let ((bindctl (format-bindstr bindstr)))
     `(defun ,name ,(group-syms a)
-       ,@(eval (mk-binding-body a bindctl)))))
+       ,@(mk-binding-body a bindctl))))
 
 (defmacro mk-binding-hex (name a bindstr)
   (let ((bindctl (bindstr-hex-to-bin (format-bindstr bindstr))))
     `(defun ,name ,(group-syms a)
-       ,@(eval (mk-binding-body a bindctl)))))
+       ,@(mk-binding-body a bindctl))))
 
 ;; example
 (mac (mk-binding-bin my-bind-fun
@@ -497,11 +497,11 @@
   (let* ((w (apply #'min (mapcar #'group-width (list a b s))))
          (c (gensym)))
     `(let ,(group-defs `(:name ,c :start 1 :width ,(1- w)))
-       ,@(eval (mk-rc-adder-body w
-                                 (group-name a)
-                                 (group-name b)
-                                 c
-                                 (group-name s))))))
+       ,@(mk-rc-adder-body w
+                           (group-name a)
+                           (group-name b)
+                           c
+                           (group-name s)))))
 
 (mac (mk-rc-adder-w/o-defun
       (:name a :width 4 :start 3 :inc -1)
@@ -510,7 +510,7 @@
 
 (defmacro mk-binding-bin-w/o (a bindstr)
   (let ((bindctl (format-bindstr bindstr)))
-    `(progn ,@(eval (mk-binding-body a bindctl)))))
+    `(progn ,@(mk-binding-body a bindctl))))
 
 (mac (mk-binding-bin-w/o
       (:name a :width 8 :start 7 :inc -1)
@@ -518,7 +518,7 @@
 
 (defmacro mk-binding-hex-w/o (a bindstr)
   (let ((bindctl (bindstr-hex-to-bin (format-bindstr bindstr))))
-    `(progn ,@(eval (mk-binding-body a bindctl)))))
+    `(progn ,@(mk-binding-body a bindctl))))
 
 (mac (mk-binding-hex-w/o
       (:name c :width 4 :start 3 :inc -1)
