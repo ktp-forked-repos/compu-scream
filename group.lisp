@@ -155,20 +155,9 @@
   `(let ,(mapcan #'group-defs groups)
      ,@body))
 
-;; (mac (let-groups ((:name c :width 4)
-;;                   (:name d :width 3 :start 2 :inc -1))
-;;          body))
-;;
-;; --->
-;;
-;; (let ((c-0 (a-booleanv))
-;;       (c-1 (a-booleanv))
-;;       (c-2 (a-booleanv))
-;;       (c-3 (a-booleanv))
-;;       (d-2 (a-booleanv))
-;;       (d-1 (a-booleanv))
-;;       (d-0 (a-booleanv)))
-;;   body)
+(defmacro list-groups (&rest groups)
+  `(list ,@(mapcan #'group-syms groups)))
+
 
 (defmacro std-logic-vector (name width)
   `(list :name ,name :width ,width :start ,(1- width) :inc -1))
