@@ -88,6 +88,23 @@
    (test-valhex-t1)
    (test-valhex-t2)))
 
+;; ADD a and b on width w
+(defun add (a b w)
+  (logand (+ a b)
+          (1- (ash 1 w))))
+
+(deftest-fun-args test-add-t1 add (14 1 4) 15)
+(deftest-fun-args test-add-t2 add (14 2 4) 0)
+(deftest-fun-args test-add-t3 add (254 1 8) 255)
+(deftest-fun-args test-add-t4 add (254 2 8) 0)
+
+(deftest test-add ()
+  (combine-results
+   (test-add-t1)
+   (test-add-t2)
+   (test-add-t3)
+   (test-add-t4)))
+
 ;; ROTL and ROTR given amount of bits on x of width w
 (defun rotl (x w bits)
   (logior (logand (ash x (mod bits w))
@@ -156,5 +173,6 @@
    (test-vecbin)
    (test-vechex)
    (test-valstr)
+   (test-add)
    (test-rot)
    (test-shift)))

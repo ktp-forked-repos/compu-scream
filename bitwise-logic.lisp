@@ -291,7 +291,7 @@
         (out nil))
     (dotimes (a n)
       (dotimes (b n)
-        (let* ((s (mod (+ a b) n))
+        (let* ((s (add a b width))
                (str (strcat (value->binstr a width)
                             (value->binstr b width)
                             (value->binstr s width))))
