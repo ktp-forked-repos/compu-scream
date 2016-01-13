@@ -433,9 +433,8 @@
       (:name c :width 4 :start 3 :inc -1)
       "a"))
 
-(def-solver example
-  all-values
-  vector->binstr
+
+(def-solver ex1 all-values vector->binstr
   ((:name a :width 4 :start 3 :inc -1)
    (:name b :width 4 :start 3 :inc -1)
    (:name s :width 4 :start 3 :inc -1))
@@ -448,17 +447,29 @@
   (mk-binding-hex-w/o (:name b :width 4 :start 3 :inc -1) "A")
   (mk-binding-bin-w/o (:name s :width 4 :start 3 :inc -1) "xx:xx"))
 
-(example)
+(ex1)
 
-(def-solver rc-adder-single-value
-  one-value
-  vector->binstr
-  ((:name x :width 3 :start 2 :inc -1)
-   (:name y :width 3 :start 2 :inc -1)
-   (:name z :width 3 :start 2 :inc -1))
-  (mk-rc-adder-w/o-defun (:name x :width 3 :start 2 :inc -1)
-                         (:name y :width 3 :start 2 :inc -1)
-                         (:name z :width 3 :start 2 :inc -1)))
+
+(def-solver ex2 all-values vector->hexstr
+  ((:name a :width 32 :start 31 :inc -1)
+   (:name b :width 32 :start 31 :inc -1)
+   (:name c :width 32 :start 31 :inc -1)
+   (:name x :width 32 :start 31 :inc -1)
+   (:name y :width 32 :start 31 :inc -1)
+   (:name z :width 32 :start 31 :inc -1))
+  (mk-rc-adder-w/o-defun (:name a :width 32 :start 31 :inc -1)
+                         (:name b :width 32 :start 31 :inc -1)
+                         (:name c :width 32 :start 31 :inc -1))
+  (mk-rc-adder-w/o-defun (:name x :width 32 :start 31 :inc -1)
+                         (:name y :width 32 :start 31 :inc -1)
+                         (:name z :width 32 :start 31 :inc -1))
+  (mk-binding-hex-w/o (:name a :width 32 :start 31 :inc -1) "0000000x")
+  (mk-binding-hex-w/o (:name b :width 32 :start 31 :inc -1) "12345678")
+  (mk-binding-hex-w/o (:name x :width 32 :start 31 :inc -1) "x2345677")
+  (mk-binding-hex-w/o (:name y :width 32 :start 31 :inc -1) "12345678"))
+
+(ex2)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
