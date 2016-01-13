@@ -14,17 +14,26 @@
     (list* indicator new-value other-properties)))
 
 
-(defun slice-string-inner (string length slice-length slice-list)
+(defun slice-seq (seq length slice-length slice-list)
   (if (> length slice-length)
       (let* ((rem-length (- length slice-length))
-             (rem-string (subseq string 0 rem-length))
-             (slice (subseq string rem-length length)))
-        (slice-string-inner rem-string rem-length slice-length (cons slice slice-list)))
-      (cons string slice-list)))
+             (rem-seq (subseq seq 0 rem-length))
+             (slice (subseq seq rem-length length)))
+        (slice-seq rem-seq rem-length slice-length (cons slice slice-list)))
+      (cons seq slice-list)))
+
+(deftest-fun-args test-slice-seq-t1
+  slice-seq ('(a b c d e f g h) 8 1 nil) '((A) (B) (C) (D) (E) (F) (G) (H)))
+(deftest-fun-args test-slice-seq-t2
+  slice-seq ('(a b c d e f g h) 8 2 nil) '((A B) (C D) (E F) (G H)))
+(deftest-fun-args test-slice-seq-t3
+  slice-seq ('(a b c d e f g h) 8 3 nil) '((A B) (C D E) (F G H)))
+(deftest-fun-args test-slice-seq-t4
+  slice-seq ('(a b c d e f g h) 8 4 nil) '((A B C D) (E F G H)))
 
 (defun slice-string (string slice-length sep-char)
   (if (> slice-length 0)
-      (let ((slice-list (slice-string-inner string (length string) slice-length nil))
+      (let ((slice-list (slice-seq string (length string) slice-length nil))
             (format-str (format nil "~~{~~A~~^~c~~}" sep-char)))
         (format nil format-str slice-list))
       string))
@@ -35,14 +44,17 @@
 (deftest-fun-args test-slice-string-t4 slice-string ("1011001100" 4 #\_) "10_1100_1100")
 (deftest-fun-args test-slice-string-t5 slice-string ("abcdefghgijklmnop" 8 #\:) "a:bcdefghg:ijklmnop")
 
-(deftest test-slice-string ()
+(deftest test-slice ()
   (combine-results
+   (test-slice-seq-t1)
+   (test-slice-seq-t2)
+   (test-slice-seq-t3)
+   (test-slice-seq-t4)
    (test-slice-string-t1)
    (test-slice-string-t2)
    (test-slice-string-t3)
    (test-slice-string-t4)
    (test-slice-string-t5)))
-
 
 (defun vector->value-int (v val)
   (if (null v)
@@ -63,7 +75,11 @@
     (slice-string str slice sep)))
 
 (defun vector->hexstr (v  &key (slice 8) (sep #\:))
-  (let ((str (format nil "~x" (vector->value v))))
+  (let* ((slice-list (slice-seq v (length v) 4 nil)) ; cut vector into nibbles
+         (str (make-array (length slice-list)
+                          :element-type 'character
+                          :initial-contents (mapcar #'nibble-vector->hexchar
+                                                    slice-list))))
     (slice-string str slice sep)))
 
 (defun value->binstr (value bits &key (slice 4) (sep #\_))
@@ -104,6 +120,11 @@
                       t t t t nil t nil t t t t nil nil nil t t t t t nil)
                   :sep #\-)
   "2AB-C3FF5E3E")
+(deftest-fun-args test-vechex-t7
+  vector->hexstr ('(nil nil nil nil nil nil nil nil nil nil nil nil t nil nil t
+                        t t t t nil t t nil)
+                  :slice 2)
+  "00:09:F6")
 
 (deftest-fun-args test-valbin-t1 value->binstr (24 8) "0001_1000")
 (deftest-fun-args test-valbin-t2 value->binstr (124 16) "0000_0000_0111_1100")
@@ -145,7 +166,8 @@
    (test-vechex-t3)
    (test-vechex-t4)
    (test-vechex-t5)
-   (test-vechex-t6)))
+   (test-vechex-t6)
+   (test-vechex-t7)))
 
 (deftest test-valstr ()
   (combine-results
@@ -239,7 +261,7 @@
 
 (deftest test-utils ()
   (combine-results
-   (test-slice-string)
+   (test-slice)
    (test-vecval)
    (test-vecbin)
    (test-vechex)

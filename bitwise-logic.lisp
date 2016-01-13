@@ -3,6 +3,7 @@
 
 (load "test.lisp")
 (load "macros.lisp")
+(load "hexutils.lisp")
 (load "utils.lisp")
 (load "group.lisp")
 (load "solver.lisp")
@@ -425,7 +426,7 @@
       "01:01-x1:x1"))
 
 (defmacro mk-binding-hex-w/o (a bindstr)
-  (let ((bindctl (bindstr-hex-to-bin (filter-bindstr bindstr))))
+  (let ((bindctl (bindstr-hex->bin (filter-bindstr bindstr))))
     `(progn ,@(mk-binding-body a bindctl))))
 
 (mac (mk-binding-hex-w/o
