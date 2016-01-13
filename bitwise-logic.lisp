@@ -412,7 +412,7 @@
       (:name s :width 4 :start 3 :inc -1)))
 
 (defmacro mk-binding-bin-w/o (a bindstr)
-  (let ((bindctl (format-bindstr bindstr)))
+  (let ((bindctl (filter-bindstr bindstr)))
     `(progn ,@(mk-binding-body a bindctl))))
 
 (mac (mk-binding-bin-w/o
@@ -420,7 +420,7 @@
       "01:01-x1:x1"))
 
 (defmacro mk-binding-hex-w/o (a bindstr)
-  (let ((bindctl (bindstr-hex-to-bin (format-bindstr bindstr))))
+  (let ((bindctl (bindstr-hex-to-bin (filter-bindstr bindstr))))
     `(progn ,@(mk-binding-body a bindctl))))
 
 (mac (mk-binding-hex-w/o

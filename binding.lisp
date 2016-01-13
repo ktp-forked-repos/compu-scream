@@ -7,14 +7,15 @@
 ;; marked as 'don't care' do not receive any binding.
 ;;
 ;; When specifying the binding value as hex or bin, separator
-;; characters ':' or '-' may be arbitrarily added to make the string
-;; easier to comprehend. These separators are skipped and ignored.
+;; characters ' ', ':', '-' or '_' may be arbitrarily added to make
+;; the string easier to comprehend. These separators are skipped and
+;; ignored.
 ;;
 ;; In a binary binding, 'x' means 'don't care'.  In a hex binding, 'x'
 ;; means don't care for all the corresponding four bits.
 
-(defun format-bindstr (bindstr)
-  (remove #\- (remove #\: bindstr)))
+(defun filter-bindstr (bindstr)
+  (remove #\Space (remove #\_ (remove #\- (remove #\: bindstr)))))
 
 (defun bindstr-hex-to-bin (hex)
   (with-output-to-string (s)
@@ -44,19 +45,19 @@
            (t nil))))
 
 (defmacro mk-binding-bin (name a bindstr)
-  (let ((bindctl (format-bindstr bindstr)))
+  (let ((bindctl (filter-bindstr bindstr)))
     `(defun ,name ,(group-syms a)
        ,@(mk-binding-body a bindctl))))
 
 (defmacro mk-binding-hex (name a bindstr)
-  (let ((bindctl (bindstr-hex-to-bin (format-bindstr bindstr))))
+  (let ((bindctl (bindstr-hex-to-bin (filter-bindstr bindstr))))
     `(defun ,name ,(group-syms a)
        ,@(mk-binding-body a bindctl))))
 
 ;; example
 (mac (mk-binding-bin my-bind-fun
                      (:name a :width 8 :start 7 :inc -1)
-                     "01:01-x1:x1"))
+                     "01:01 - x1_x1"))
 
 (mac (mk-binding-hex my-bind-fun
                      (:name a :width 8 :start 7 :inc -1)
