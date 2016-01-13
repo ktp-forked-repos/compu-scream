@@ -1,7 +1,7 @@
 (require :screamer)
 (in-package :screamer-user)
 
-;; mk-binding: bind a vector to certain bit values.
+;; binding-bin and binding-hex: bind a vector to certain bit values.
 ;;
 ;; Each bit can have three values: T, NIL and 'don't care'. Bits
 ;; marked as 'don't care' do not receive any binding.
@@ -22,36 +22,34 @@
      (dolist (c (coerce (string-downcase hex) 'list))
        (princ (nibble-hexchar->binstr c) s))))
 
-(defun mk-binding-body (a bindstr)
+(defun binding-body (a bindstr)
   (unroll-groups (list a)
     `(cond ((eq #\0 (char ,bindstr idx)) `(assert! (equalv ,,(group-name a) nil)))
            ((eq #\1 (char ,bindstr idx)) `(assert! (equalv ,,(group-name a) t)))
            (t nil))))
 
-(defmacro mk-binding-bin (name a bindstr)
+(defmacro binding-bin (a bindstr)
   (let ((bindctl (filter-bindstr bindstr)))
-    `(defun ,name ,(group-syms a)
-       ,@(mk-binding-body a bindctl))))
+    `(progn ,@(binding-body a bindctl))))
 
-(defmacro mk-binding-hex (name a bindstr)
+(defmacro binding-hex (a bindstr)
   (let ((bindctl (bindstr-hex->bin (filter-bindstr bindstr))))
-    `(defun ,name ,(group-syms a)
-       ,@(mk-binding-body a bindctl))))
+    `(progn ,@(binding-body a bindctl))))
 
-;; example
-(mac (mk-binding-bin my-bind-fun
-                     (:name a :width 8 :start 7 :inc -1)
-                     "01:01 - x1_x1"))
+;; examples
 
-(mac (mk-binding-hex my-bind-fun
-                     (:name a :width 8 :start 7 :inc -1)
-                     "A:D"))
+(mac (binding-bin
+      (:name a :width 8 :start 7 :inc -1)
+      "01:01-x1:x1"))
 
-;; should expand into:
-(defun my-bind-fun (a-7 a-6 a-5 a-4 a-3 a-2 a-1 a-0)
-  (assert! (equalv a-7 nil))
-  (assert! (equalv a-6 t))
-  (assert! (equalv a-5 nil))
-  (assert! (equalv a-4 t))
-  (assert! (equalv a-2 t))
-  (assert! (equalv a-0 t)))
+(mac (binding-hex
+      (:name c :width 4 :start 3 :inc -1)
+      "a"))
+
+(mac (binding-bin
+      (:name a :width 8 :start 7 :inc -1)
+      "01:01 - x1_x1"))
+
+(mac (binding-hex
+      (:name a :width 8 :start 7 :inc -1)
+      "A:D"))
