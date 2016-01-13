@@ -9,8 +9,8 @@
   `(,solver-extent
     (solution
      (let-groups ,groups
-                 ,@constraints
-                 (list-groups ,@groups))
+        ,@constraints
+        (list-groups ,@groups))
      (reorder #'domain-size
               #'(lambda (x) (declare (ignore x)) nil)
               #'<
