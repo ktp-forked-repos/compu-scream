@@ -77,6 +77,13 @@
                                     (andv ,ci
                                           (xor2v ,a ,b)))))))
 
+(mk-testcirc test-half-adder-f half-adder 4)
+(mk-testcirc test-full-adder-f full-adder 5)
+
+(deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
+(deftest-fun test-full-adder '("0_0000" "0_0101" "0_1001" "0_1110"
+                               "1_0001" "1_0110" "1_1010" "1_1111"))
+
 ;; generic ripple-carry adder structure
 (defun rc-adder-body (w a b c s)
   (let ((groups `((:name ,a :width ,w)
@@ -99,6 +106,29 @@
                         c
                         (group-name s)))))
 
+(mk-testcirc/groups test-rc-adder3-f rc-adder () 3 3 3)
+(mk-testcirc/groups test-rc-adder4-f rc-adder () 4 4 4)
+(mk-testcirc/groups test-rc-adder5-f rc-adder () 5 5 5)
+(mk-testcirc/groups test-rc-adder6-f rc-adder () 6 6 6)
+(mk-testcirc/groups test-rc-adder7-f rc-adder () 7 7 7)
+(mk-testcirc/groups test-rc-adder8-f rc-adder () 8 8 8)
+
+(deftest-fun test-rc-adder3 (rc-adder-output 3))
+(deftest-fun test-rc-adder4 (rc-adder-output 4))
+(deftest-fun test-rc-adder5 (rc-adder-output 5))
+(deftest-fun test-rc-adder6 (rc-adder-output 6))
+(deftest-fun test-rc-adder7 (rc-adder-output 7))
+(deftest-fun test-rc-adder8 (rc-adder-output 8))
+
+(deftest test-rc-adder ()
+  (combine-results
+   (test-rc-adder3)
+   (test-rc-adder4)
+   (test-rc-adder5)
+   (test-rc-adder6)
+   (test-rc-adder7)
+   (test-rc-adder8)))
+
 ;; generic bit rotate operations
 (defun rotate-body (a b)
   (let ((groups (list a b)))
@@ -118,6 +148,20 @@
          (b-shifted (mod (+ (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(progn ,@(rotate-body a b-rotated))))
+
+(mk-testcirc/groups test-rotl1-8-f rotate-left (1) 8 8)
+(mk-testcirc/groups test-rotr1-8-f rotate-right (1) 8 8)
+(mk-testcirc/groups test-rotr9-16-f rotate-right (9) 16 16)
+
+(deftest-fun test-rotl1-8 (rotl-output 1 8))
+(deftest-fun test-rotr1-8 (rotr-output 1 8))
+(deftest-fun test-rotr9-16 (rotr-output 9 16))
+
+(deftest test-rotlr ()
+  (combine-results
+   (test-rotl1-8)
+   (test-rotr1-8)
+   (test-rotr9-16)))
 
 ;; generic bit shift operations
 (defun shift-left-body (bits a b)
@@ -148,35 +192,6 @@
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(progn ,@(shift-right-body bits a b-rotated))))
 
-(mk-testcirc test-half-adder-f half-adder 4)
-(mk-testcirc test-full-adder-f full-adder 5)
-
-(deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
-(deftest-fun test-full-adder '("0_0000" "0_0101" "0_1001" "0_1110"
-                               "1_0001" "1_0110" "1_1010" "1_1111"))
-
-(mk-testcirc/groups test-rc-adder3-f rc-adder () 3 3 3)
-(mk-testcirc/groups test-rc-adder4-f rc-adder () 4 4 4)
-(mk-testcirc/groups test-rc-adder5-f rc-adder () 5 5 5)
-(mk-testcirc/groups test-rc-adder6-f rc-adder () 6 6 6)
-(mk-testcirc/groups test-rc-adder7-f rc-adder () 7 7 7)
-(mk-testcirc/groups test-rc-adder8-f rc-adder () 8 8 8)
-
-(deftest-fun test-rc-adder3 (rc-adder-output 3))
-(deftest-fun test-rc-adder4 (rc-adder-output 4))
-(deftest-fun test-rc-adder5 (rc-adder-output 5))
-(deftest-fun test-rc-adder6 (rc-adder-output 6))
-(deftest-fun test-rc-adder7 (rc-adder-output 7))
-(deftest-fun test-rc-adder8 (rc-adder-output 8))
-
-(mk-testcirc/groups test-rotl1-8-f rotate-left (1) 8 8)
-(mk-testcirc/groups test-rotr1-8-f rotate-right (1) 8 8)
-(mk-testcirc/groups test-rotr9-16-f rotate-right (9) 16 16)
-
-(deftest-fun test-rotl1-8 (rotl-output 1 8))
-(deftest-fun test-rotr1-8 (rotr-output 1 8))
-(deftest-fun test-rotr9-16 (rotr-output 9 16))
-
 (mk-testcirc/groups test-shl1-4-f shift-left (1) 4 4)
 (mk-testcirc/groups test-shl1-8-f shift-left (1) 8 8)
 (mk-testcirc/groups test-shr1-8-f shift-right (1) 8 8)
@@ -189,21 +204,6 @@
 (deftest-fun test-shl7-16 (shl-output 7 16))
 (deftest-fun test-shr9-16 (shr-output 9 16))
 
-(deftest test-rc-adder ()
-  (combine-results
-   (test-rc-adder3)
-   (test-rc-adder4)
-   (test-rc-adder5)
-   (test-rc-adder6)
-   (test-rc-adder7)
-   (test-rc-adder8)))
-
-(deftest test-rotlr ()
-  (combine-results
-   (test-rotl1-8)
-   (test-rotr1-8)
-   (test-rotr9-16)))
-
 (deftest test-shlr ()
   (combine-results
    (test-shl1-4)
@@ -211,6 +211,7 @@
    (test-shr1-8)
    (test-shl7-16)
    (test-shr9-16)))
+
 
 (deftest test-basic-circuits ()
   (combine-results
