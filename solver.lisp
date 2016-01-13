@@ -17,12 +17,13 @@
               #'linear-force))))
 
 (defmacro def-solver (name solver-extent
+                           vector-formatter
                            groups
                            &body constraints)
   (let ((solver-inner (def-solver-inner solver-extent groups constraints)))
     `(defun ,name ()
        (sort
         ,(if (eq 'all-values solver-extent)
-             `(mapcar #'vector->binstr ,solver-inner)
-             `(list (vector->binstr ,solver-inner)))
+             `(mapcar #',vector-formatter ,solver-inner)
+             `(list (,vector-formatter ,solver-inner)))
        #'string<))))

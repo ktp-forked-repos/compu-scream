@@ -40,6 +40,7 @@
   (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
     `(def-solver ,name
        all-values
+       vector->binstr
        (,group)
        (assert! (,fun ,@(group-syms group))))))
 
@@ -249,6 +250,7 @@
   (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
     `(def-solver ,name
        all-values
+       vector->binstr
        (,group)
        (,fun ,@(group-syms group)))))
 
@@ -256,8 +258,8 @@
 (mk-testcirc test-full-adder-f full-adder 5)
 
 (deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
-(deftest-fun test-full-adder '("00000" "00101" "01001" "01110"
-                               "10001" "10110" "11010" "11111"))
+(deftest-fun test-full-adder '("0_0000" "0_0101" "0_1001" "0_1110"
+                               "1_0001" "1_0110" "1_1010" "1_1111"))
 
 ;; compute what the output of an adder test function should be
 (defun rc-adder-output (width)
@@ -266,10 +268,11 @@
     (dotimes (a n)
       (dotimes (b n)
         (let* ((s (add a b width))
-               (str (strcat (value->binstr a width)
-                            (value->binstr b width)
-                            (value->binstr s width))))
-          (setf out (cons str out)))))
+               (str (strcat (value->binstr a width :slice 0)
+                            (value->binstr b width :slice 0)
+                            (value->binstr s width :slice 0)))
+               (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out)))))
     (nreverse out)))
 
 ;; compute what the output of a rotate test function should be
@@ -278,9 +281,10 @@
         (out nil))
     (dotimes (a n)
       (let* ((s (rotl a width bits))
-             (str (strcat (value->binstr s width)
-                          (value->binstr a width))))
-          (setf out (cons str out))))
+             (str (strcat (value->binstr s width :slice 0)
+                          (value->binstr a width :slice 0)))
+             (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out))))
     (sort out #'string<)))
 
 (defun rotr-output (bits width)
@@ -292,9 +296,10 @@
         (out nil))
     (dotimes (a n)
       (let* ((s (shl a width bits))
-             (str (strcat (value->binstr s width)
-                          (value->binstr a width))))
-          (setf out (cons str out))))
+             (str (strcat (value->binstr s width :slice 0)
+                          (value->binstr a width :slice 0)))
+             (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out))))
     (sort out #'string<)))
 
 (defun shr-output (bits width)
@@ -429,6 +434,7 @@
 
 (def-solver example
   all-values
+  vector->binstr
   ((:name a :width 4 :start 3 :inc -1)
    (:name b :width 4 :start 3 :inc -1)
    (:name s :width 4 :start 3 :inc -1))
@@ -445,6 +451,7 @@
 
 (def-solver rc-adder-single-value
   one-value
+  vector->binstr
   ((:name x :width 3 :start 2 :inc -1)
    (:name y :width 3 :start 2 :inc -1)
    (:name z :width 3 :start 2 :inc -1))
