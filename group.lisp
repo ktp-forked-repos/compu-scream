@@ -42,7 +42,7 @@
 (defun group-mod! (g v) (update-plist g :mod v))
 
 ;; unroll-groups helper function
-(defun mk-unroll-groups-do-body (groups)
+(defun unroll-groups-do-body (groups)
   (append
    `((body-out nil)
      (idx 0 (incf idx)))
@@ -56,9 +56,9 @@
                                     `(mod (+ ,var ,inc) ,mod)))))
            groups)))
 
-(deftest-fun-args test-mk-unroll-groups-do-body
-  mk-unroll-groups-do-body ( '((:name a :start 0 :width 7)
-                               (:name b :start 7 :inc -1 :mod 8)) )
+(deftest-fun-args test-unroll-groups-do-body
+  unroll-groups-do-body ( '((:name a :start 0 :width 7)
+                            (:name b :start 7 :inc -1 :mod 8)) )
   '((body-out nil)
     (idx 0 (incf idx))
     (a 0 (+ a 1))
@@ -93,7 +93,7 @@
   (let ((names (mapcar #'group-name groups))
         (vars  (mapcar #'group-var groups))
         (width (apply #'min (mapcar #'group-width groups)))
-        (do-body (mk-unroll-groups-do-body groups)))
+        (do-body (unroll-groups-do-body groups)))
     (let ((body `(do ,do-body
                      ((>= idx ,width)
                       (nreverse body-out))
@@ -170,7 +170,7 @@
   (combine-results
    (test-mk-signal-sym)
    (test-group-getters)
-   (test-mk-unroll-groups-do-body)
+   (test-unroll-groups-do-body)
    (test-unroll-groups)
    (test-group-syms)
    (test-group-defs)))

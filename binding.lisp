@@ -36,20 +36,62 @@
   (let ((bindctl (bindstr-hex->bin (filter-bindstr bindstr))))
     `(progn ,@(binding-body a bindctl))))
 
-;; examples
+;; test macroexpansions
 
-(mac (binding-bin
-      (:name a :width 8 :start 7 :inc -1)
-      "01:01-x1:x1"))
+(deftest-fun-args test-binding-body
+  binding-body ('(:name x :width 4 :start 3 :inc -1) "1010" )
+  '((assert! (equalv x-3 t))
+    (assert! (equalv x-2 nil))
+    (assert! (equalv x-1 t))
+    (assert! (equalv x-0 nil))))
 
-(mac (binding-hex
-      (:name c :width 4 :start 3 :inc -1)
-      "a"))
+(deftest-fun-args test-binding-bin-t1
+  macroexpand-1 ('(binding-bin (:name a :width 8 :start 7 :inc -1) "01:01-x1:x1"))
+  '(progn
+    (assert! (equalv a-7 nil))
+    (assert! (equalv a-6 t))
+    (assert! (equalv a-5 nil))
+    (assert! (equalv a-4 t))
+    (assert! (equalv a-2 t))
+    (assert! (equalv a-0 t))))
 
-(mac (binding-bin
-      (:name a :width 8 :start 7 :inc -1)
-      "01:01 - x1_x1"))
+(deftest-fun-args test-binding-bin-t2
+  macroexpand-1 ('(binding-bin (:name a :width 8 :start 7 :inc -1) "x1:x0 - x1_x1"))
+  '(progn
+    (assert! (equalv a-6 t))
+    (assert! (equalv a-4 nil))
+    (assert! (equalv a-2 t))
+    (assert! (equalv a-0 t))))
 
-(mac (binding-hex
-      (:name a :width 8 :start 7 :inc -1)
-      "A:D"))
+(deftest-fun-args test-binding-hex-t1
+  macroexpand-1 ('(binding-hex (:name c :width 8 :start 7 :inc -1) "a9"))
+  '(progn
+    (assert! (equalv c-7 t))
+    (assert! (equalv c-6 nil))
+    (assert! (equalv c-5 t))
+    (assert! (equalv c-4 nil))
+    (assert! (equalv c-3 t))
+    (assert! (equalv c-2 nil))
+    (assert! (equalv c-1 nil))
+    (assert! (equalv c-0 t))))
+
+(deftest-fun-args test-binding-hex-t2
+  macroexpand-1 ('(binding-hex (:name z :width 8 :start 7 :inc -1) "A:D"))
+  '(progn
+    (assert! (equalv z-7 t))
+    (assert! (equalv z-6 nil))
+    (assert! (equalv z-5 t))
+    (assert! (equalv z-4 nil))
+    (assert! (equalv z-3 t))
+    (assert! (equalv z-2 t))
+    (assert! (equalv z-1 nil))
+    (assert! (equalv z-0 t))))
+
+
+(deftest test-binding ()
+  (combine-results
+   (test-binding-body)
+   (test-binding-bin-t1)
+   (test-binding-bin-t2)
+   (test-binding-hex-t1)
+   (test-binding-hex-t2)))

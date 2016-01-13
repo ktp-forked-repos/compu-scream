@@ -61,6 +61,7 @@
    (test-macros)
    (test-utils)
    (test-group)
+   (test-binding)
    (test-logic-gates)
    (test-basic-circuits)))
 
