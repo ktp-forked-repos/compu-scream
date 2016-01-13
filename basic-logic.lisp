@@ -1,15 +1,7 @@
 (require :screamer)
 (in-package :screamer-user)
 
-(load "test.lisp")
-(load "macros.lisp")
-(load "hexutils.lisp")
-(load "utils.lisp")
-(load "group.lisp")
-(load "solver.lisp")
-(load "binding.lisp")
-
-;; extensions to allow gate-style logic computations
+;; boolean extensions for gate-level logic computations
 
 (defmacro nandv (&rest v)
   `(notv (andv ,@v)))
@@ -34,16 +26,6 @@
   `(xor3v (andv ,x ,y)
           (andv ,x ,z)
           (andv ,y ,z)))
-
-;; test function generators
-
-(defmacro mk-testfun (name fun arity)
-  (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
-    `(def-solver ,name
-       all-values
-       vector->binstr
-       (,group)
-       (assert! (,fun ,@(group-syms group))))))
 
 (mk-testfun test-not-f notv 1)
 (mk-testfun test-and-f andv 2)
@@ -123,14 +105,14 @@
     (unroll-groups groups
        ``(assert! (equalv ,,(group-name a) ,,(group-name b))))))
 
-;; a = ROTL^bits(b) for MSB-first vectors
+;; a = ROTL^bits(b) for MSB-first vectors, ROTR for LSB
 (defmacro rotate-left (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
          (b-shifted (mod (- (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(progn ,@(rotate-body a b-rotated))))
 
-;; a = ROTR^bits(b) for MSB-first vectors
+;; a = ROTR^bits(b) for MSB-first vectors, ROTL for LSB
 (defmacro rotate-right (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
          (b-shifted (mod (+ (group-start a) bits) w))
@@ -152,52 +134,19 @@
              (t             `(assert! (equalv ,,(group-var a)
                                               ,,(group-var b))))))))
 
-;; a = b << bits for MSB-first vectors
+;; a = b << bits for MSB-first vectors, >> for LSB
 (defmacro shift-left (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
          (b-shifted (mod (- (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(progn ,@(shift-left-body (- w bits) a b-rotated))))
 
-;; a = b >> bits for MSB-first vectors
+;; a = b >> bits for MSB-first vectors, << for LSB
 (defmacro shift-right (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
          (b-shifted (mod (+ (group-start a) bits) w))
          (b-rotated (group-mod! (group-start! b b-shifted) w)))
     `(progn ,@(shift-right-body bits a b-rotated))))
-
-;; test function generators
-
-(defmacro mk-testcirc (name fun arity)
-  (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
-    `(def-solver ,name
-       all-values
-       vector->binstr
-       (,group)
-       (,fun ,@(group-syms group)))))
-
-(defun mock-group-symbols (n)
-  (let ((symbols nil))
-    (dotimes (i n)
-      (let* ((char (code-char (+ (char-code #\A) i)))
-             (str (coerce (list char) 'string)))
-        (setf symbols (cons (intern str) symbols))))
-    (nreverse symbols)))
-
-(defun mock-group-list (arity-list)
-  (let ((symbols (mock-group-symbols (length arity-list))))
-    (mapcar #'(lambda (sym arity)
-                `(:name ,sym :width ,arity :start ,(1- arity) :inc -1))
-            symbols arity-list)))
-
-;; can args be key/optional?
-(defmacro mk-testcirc/groups (name fun args &rest arity-list)
-  (let ((groups (mock-group-list arity-list)))
-    `(def-solver ,name
-       all-values
-       vector->binstr
-       ,groups
-       (,fun ,@args ,@groups))))
 
 (mk-testcirc test-half-adder-f half-adder 4)
 (mk-testcirc test-full-adder-f full-adder 5)
@@ -205,50 +154,6 @@
 (deftest-fun test-half-adder '("0000" "0101" "1001" "1110"))
 (deftest-fun test-full-adder '("0_0000" "0_0101" "0_1001" "0_1110"
                                "1_0001" "1_0110" "1_1010" "1_1111"))
-
-;; compute what the output of an adder test function should be
-(defun rc-adder-output (width)
-  (let ((n (ash 1 width))
-        (out nil))
-    (dotimes (a n)
-      (dotimes (b n)
-        (let* ((s (add a b width))
-               (str (strcat (value->binstr a width :slice 0)
-                            (value->binstr b width :slice 0)
-                            (value->binstr s width :slice 0)))
-               (fmt-str (slice-string str 4 #\_)))
-          (setf out (cons fmt-str out)))))
-    (nreverse out)))
-
-;; compute what the output of a rotate test function should be
-(defun rotl-output (bits width)
-  (let ((n (ash 1 width))
-        (out nil))
-    (dotimes (a n)
-      (let* ((s (rotl a width bits))
-             (str (strcat (value->binstr s width :slice 0)
-                          (value->binstr a width :slice 0)))
-             (fmt-str (slice-string str 4 #\_)))
-          (setf out (cons fmt-str out))))
-    (sort out #'string<)))
-
-(defun rotr-output (bits width)
-  (rotl-output (- bits) width))
-
-;; compute what the output of a shift test function should be
-(defun shl-output (bits width)
-  (let ((n (ash 1 width))
-        (out nil))
-    (dotimes (a n)
-      (let* ((s (shl a width bits))
-             (str (strcat (value->binstr s width :slice 0)
-                          (value->binstr a width :slice 0)))
-             (fmt-str (slice-string str 4 #\_)))
-          (setf out (cons fmt-str out))))
-    (sort out #'string<)))
-
-(defun shr-output (bits width)
-  (shl-output (- bits) width))
 
 (mk-testcirc/groups test-rc-adder3-f rc-adder () 3 3 3)
 (mk-testcirc/groups test-rc-adder4-f rc-adder () 4 4 4)
@@ -272,7 +177,6 @@
 (deftest-fun test-rotr1-8 (rotr-output 1 8))
 (deftest-fun test-rotr9-16 (rotr-output 9 16))
 
-
 (mk-testcirc/groups test-shl1-4-f shift-left (1) 4 4)
 (mk-testcirc/groups test-shl1-8-f shift-left (1) 8 8)
 (mk-testcirc/groups test-shr1-8-f shift-right (1) 8 8)
@@ -284,7 +188,6 @@
 (deftest-fun test-shr1-8 (shr-output 1 8))
 (deftest-fun test-shl7-16 (shl-output 7 16))
 (deftest-fun test-shr9-16 (shr-output 9 16))
-
 
 (deftest test-rc-adder ()
   (combine-results
@@ -316,56 +219,3 @@
    (test-rc-adder)
    (test-rotlr)
    (test-shlr)))
-
-(deftest test ()
-  (combine-results
-   (test-macros)
-   (test-utils)
-   (test-group)
-   (test-logic-gates)
-   (test-basic-circuits)))
-
-(test)
-
-
-;; Examples where we
-;; - declare multiple groups,
-;; - constrain them to certain logical relations,
-;; - bind some of them fully or partially,
-;; - evaluate the results.
-
-(def-solver ex1 all-values vector->binstr
-  ((:name a :width 4 :start 3 :inc -1)
-   (:name b :width 4 :start 3 :inc -1)
-   (:name s :width 4 :start 3 :inc -1))
-
-  ;; TODO from this point, write a instead of (:name a ...)
-  (rc-adder (:name a :width 4 :start 3 :inc -1)
-            (:name b :width 4 :start 3 :inc -1)
-            (:name s :width 4 :start 3 :inc -1))
-  (binding-bin (:name a :width 4 :start 3 :inc -1) "x1:01")
-  (binding-hex (:name b :width 4 :start 3 :inc -1) "A")
-  (binding-bin (:name s :width 4 :start 3 :inc -1) "xx:xx"))
-
-(ex1)
-
-
-(def-solver ex2 all-values vector->hexstr
-  ((:name a :width 32 :start 31 :inc -1)
-   (:name b :width 32 :start 31 :inc -1)
-   (:name c :width 32 :start 31 :inc -1)
-   (:name x :width 32 :start 31 :inc -1)
-   (:name y :width 32 :start 31 :inc -1)
-   (:name z :width 32 :start 31 :inc -1))
-  (rc-adder (:name a :width 32 :start 31 :inc -1)
-            (:name b :width 32 :start 31 :inc -1)
-            (:name c :width 32 :start 31 :inc -1))
-  (rc-adder (:name x :width 32 :start 31 :inc -1)
-            (:name y :width 32 :start 31 :inc -1)
-            (:name z :width 32 :start 31 :inc -1))
-  (binding-hex (:name a :width 32 :start 31 :inc -1) "0000000x")
-  (binding-hex (:name b :width 32 :start 31 :inc -1) "12345678")
-  (binding-hex (:name x :width 32 :start 31 :inc -1) "x2345677")
-  (binding-hex (:name y :width 32 :start 31 :inc -1) "12345678"))
-
-(ex2)
