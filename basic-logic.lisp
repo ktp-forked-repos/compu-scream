@@ -209,6 +209,34 @@
    (test-shr9-16)))
 
 
+;; functions for SHA computations
+;; optimized to not require intermediate signals
+
+;;    a          b             c              d
+;; BSIG0(x) = ROTR^2(x) XOR ROTR^13(x) XOR ROTR^22(x)
+(defun bsig-body (a b c d)
+  (let ((groups (list a b c d)))
+    (unroll-groups groups
+       ``(assert! (equalv ,,(group-var a)
+                          (xor3v ,,(group-var b)
+                                 ,,(group-var c)
+                                 ,,(group-var d)))))))
+
+(defmacro bsig0 (a b)
+  (let* ((w (apply #'min (mapcar #'group-width (list a b))))
+         (b-rot2 (rotate-group w -2 a b))
+         (b-rot13 (group-var! (rotate-group w -13 a b) 'c))
+         (b-rot22 (group-var! (rotate-group w -22 a b) 'd)))
+    `(progn ,@(bsig-body a b-rot2 b-rot13 b-rot22))))
+
+;; TEST:
+;; (mac (bsig0 (:name a :width 32 :start 31 :inc -1)
+;;             (:name b :width 32 :start 31 :inc -1)))
+
+;; BSIG1(x) = ROTR^6(x) XOR ROTR^11(x) XOR ROTR^25(x)
+;; SSIG0(x) = ROTR^7(x) XOR ROTR^18(x) XOR SHR^3(x)
+;; SSIG1(x) = ROTR^17(x) XOR ROTR^19(x) XOR SHR^10(x)
+
 (deftest test-basic-circuits ()
   (combine-results
    (test-half-adder)

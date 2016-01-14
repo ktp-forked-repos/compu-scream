@@ -57,17 +57,34 @@
 (def-solver ex3 all-values vector->binstr
   ((:name a :width 4 :start 3 :inc -1)
    (:name b :width 4 :start 3 :inc -1)
-   (:name c :width 4 :start 3 :inc -1))
+   (:name c :width 4 :start 3 :inc -1)
+   (:name d :width 4 :start 3 :inc -1))
 
   (vectorize ((:name a :width 4 :start 3 :inc -1)
               (:name b :width 4 :start 3 :inc -1)
-              (:name c :width 4 :start 3 :inc -1))
-     `(assert! (equalv ,a (xor2v ,b ,c))))
+              (:name c :width 4 :start 3 :inc -1)
+              (:name d :width 4 :start 3 :inc -1))
+;;   `(assert! (equalv ,a (xor2v ,b ,c))))
+     `(assert! (equalv ,a (chv ,b ,c ,d))))
+;;   `(assert! (equalv ,a (majv ,b ,c ,d))))
 
   (binding-bin (:name a :width 4 :start 3 :inc -1) "1111")
-  (binding-bin (:name b :width 4 :start 3 :inc -1) "xxxx"))
+  (binding-bin (:name b :width 4 :start 3 :inc -1) "1111"))
 
 (ex3)
+
+
+(def-solver ex4 all-values vector->hexstr
+  ((:name a :width 32 :start 31 :inc -1)
+   (:name b :width 32 :start 31 :inc -1))
+
+  (bsig0 (:name a :width 32 :start 31 :inc -1)
+         (:name b :width 32 :start 31 :inc -1))
+
+  (binding-hex (:name a :width 32 :start 31 :inc -1) "12345678")
+  (binding-hex (:name b :width 32 :start 31 :inc -1) "xxxxxxxx"))
+
+(ex4)
 
 
 ;; Test suite
