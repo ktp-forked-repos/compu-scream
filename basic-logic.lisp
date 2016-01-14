@@ -229,8 +229,8 @@
          (b-rot22 (group-var! (rotate-group w 22 a b) 'd)))
     `(progn ,@(bsig-body a b-rot2 b-rot13 b-rot22))))
 
-(mac (bsig0 (:name a :width 32 :start 31 :inc -1)
-            (:name b :width 32 :start 31 :inc -1)))
+(mk-testcirc/groups test-bsig0-f partial-test-gen (bsig0 20) 32 32)
+(deftest-fun test-bsig0 (bsig0-output 20))
 
 ;; BSIG1(x) = ROTR^6(x) XOR ROTR^11(x) XOR ROTR^25(x)
 (defmacro bsig1 (a b)
@@ -240,8 +240,8 @@
          (b-rot25 (group-var! (rotate-group w 25 a b) 'd)))
     `(progn ,@(bsig-body a b-rot6 b-rot11 b-rot25))))
 
-(mac (bsig1 (:name a :width 32 :start 31 :inc -1)
-            (:name b :width 32 :start 31 :inc -1)))
+(mk-testcirc/groups test-bsig1-f partial-test-gen (bsig1 20) 32 32)
+(deftest-fun test-bsig1 (bsig1-output 20))
 
 ;; SSIG0(x) = ROTR^7(x) XOR ROTR^18(x) XOR SHR^3(x)
 (defun ssig-body (a b c d)
@@ -270,8 +270,8 @@
          (b-rot3 (group-var! (rotate-group w 3 a b) 'd)))
     `(progn ,@(ssig-body 3 a b-rot7 b-rot18 b-rot3))))
 
-(mac (ssig0 (:name a :width 32 :start 31 :inc -1)
-            (:name b :width 32 :start 31 :inc -1)))
+(mk-testcirc/groups test-ssig0-f partial-test-gen (ssig0 20) 32 32)
+(deftest-fun test-ssig0 (ssig0-output 20))
 
 ;; SSIG1(x) = ROTR^17(x) XOR ROTR^19(x) XOR SHR^10(x)
 (defmacro ssig1 (a b)
@@ -281,8 +281,8 @@
          (b-rot10 (group-var! (rotate-group w 10 a b) 'd)))
     `(progn ,@(ssig-body 10 a b-rot17 b-rot19 b-rot10))))
 
-(mac (ssig1 (:name a :width 32 :start 31 :inc -1)
-            (:name b :width 32 :start 31 :inc -1)))
+(mk-testcirc/groups test-ssig1-f partial-test-gen (ssig1 20) 32 32)
+(deftest-fun test-ssig1 (ssig1-output 20))
 
 (deftest test-basic-circuits ()
   (combine-results
@@ -290,4 +290,8 @@
    (test-full-adder)
    (test-rc-adder)
    (test-rotlr)
-   (test-shlr)))
+   (test-shlr)
+   (test-bsig0)
+   (test-bsig1)
+   (test-ssig0)
+   (test-ssig1)))

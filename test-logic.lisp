@@ -41,6 +41,19 @@
        ,groups
        (,fun ,@args ,@groups))))
 
+;; partially test a = fun(b) on 32 bits width, allowing only the
+;; bottom-most free-bits of b to change; thus generating the
+;; corresponding results of applying fun to 0 .. 2^free-bits - 1
+(defmacro partial-test-gen (fun free-bits a b)
+  (let ((bindstr (strcat (make-array (- 32 free-bits)
+                                     :element-type 'character
+                                     :initial-element #\0)
+                         (make-array free-bits
+                                     :element-type 'character
+                                     :initial-element #\x))))
+    `(progn (,fun ,a ,b)
+            (binding-bin ,b ,bindstr))))
+
 ;; compute reference output for adder
 (defun rc-adder-output (width)
   (let ((n (ash 1 width))
@@ -84,3 +97,51 @@
 
 (defun shr-output (bits width)
   (shl-output (- bits) width))
+
+;; compute reference output for bsig0
+(defun bsig0-output (free-bits)
+  (let ((n (ash 1 free-bits))
+        (out nil))
+    (dotimes (a n)
+      (let* ((s (arith-bsig0 a))
+             (str (strcat (value->binstr s 32 :slice 0)
+                          (value->binstr a 32 :slice 0)))
+             (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out))))
+    (sort out #'string<)))
+
+;; compute reference output for bsig1
+(defun bsig1-output (free-bits)
+  (let ((n (ash 1 free-bits))
+        (out nil))
+    (dotimes (a n)
+      (let* ((s (arith-bsig1 a))
+             (str (strcat (value->binstr s 32 :slice 0)
+                          (value->binstr a 32 :slice 0)))
+             (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out))))
+    (sort out #'string<)))
+
+;; compute reference output for ssig0
+(defun ssig0-output (free-bits)
+  (let ((n (ash 1 free-bits))
+        (out nil))
+    (dotimes (a n)
+      (let* ((s (arith-ssig0 a))
+             (str (strcat (value->binstr s 32 :slice 0)
+                          (value->binstr a 32 :slice 0)))
+             (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out))))
+    (sort out #'string<)))
+
+;; compute reference output for ssig1
+(defun ssig1-output (free-bits)
+  (let ((n (ash 1 free-bits))
+        (out nil))
+    (dotimes (a n)
+      (let* ((s (arith-ssig1 a))
+             (str (strcat (value->binstr s 32 :slice 0)
+                          (value->binstr a 32 :slice 0)))
+             (fmt-str (slice-string str 4 #\_)))
+          (setf out (cons fmt-str out))))
+    (sort out #'string<)))
