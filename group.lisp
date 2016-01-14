@@ -41,6 +41,13 @@
 (defun group-start! (g v) (update-plist g :start v))
 (defun group-mod! (g v) (update-plist g :mod v))
 
+;; rotate group b with respect to group a
+;; by given bits on width w
+(defun rotate-group (w bits a b)
+  (let ((b-shifted (mod (+ (group-start a) bits) w)))
+    (group-mod! (group-start! b b-shifted) w)))
+
+
 ;; unroll-groups helper function
 (defun unroll-groups-do-body (groups)
   (append

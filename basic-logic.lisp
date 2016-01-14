@@ -133,20 +133,18 @@
 (defun rotate-body (a b)
   (let ((groups (list a b)))
     (unroll-groups groups
-       ``(assert! (equalv ,,(group-name a) ,,(group-name b))))))
+       ``(assert! (equalv ,,(group-var a) ,,(group-var b))))))
 
 ;; a = ROTL^bits(b) for MSB-first vectors, ROTR for LSB
 (defmacro rotate-left (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
-         (b-shifted (mod (- (group-start a) bits) w))
-         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+         (b-rotated (rotate-group w (- bits) a b)))
     `(progn ,@(rotate-body a b-rotated))))
 
 ;; a = ROTR^bits(b) for MSB-first vectors, ROTL for LSB
 (defmacro rotate-right (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
-         (b-shifted (mod (+ (group-start a) bits) w))
-         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+         (b-rotated (rotate-group w bits a b)))
     `(progn ,@(rotate-body a b-rotated))))
 
 (mk-testcirc/groups test-rotl1-8-f rotate-left (1) 8 8)
@@ -181,15 +179,13 @@
 ;; a = b << bits for MSB-first vectors, >> for LSB
 (defmacro shift-left (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
-         (b-shifted (mod (- (group-start a) bits) w))
-         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+         (b-rotated (rotate-group w (- bits) a b)))
     `(progn ,@(shift-left-body (- w bits) a b-rotated))))
 
 ;; a = b >> bits for MSB-first vectors, << for LSB
 (defmacro shift-right (bits a b)
   (let* ((w (apply #'min (mapcar #'group-width (list a b))))
-         (b-shifted (mod (+ (group-start a) bits) w))
-         (b-rotated (group-mod! (group-start! b b-shifted) w)))
+         (b-rotated (rotate-group w bits a b)))
     `(progn ,@(shift-right-body bits a b-rotated))))
 
 (mk-testcirc/groups test-shl1-4-f shift-left (1) 4 4)
