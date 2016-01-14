@@ -122,6 +122,22 @@
     (assert! (equalv a-1 (xorv b-9 c-3)))
     (assert! (equalv a-0 (xorv b-8 c-4)))))
 
+
+(defmacro vectorize (groups body)
+  `(progn ,@(unroll-groups groups body)))
+
+(deftest-fun-args test-vectorize
+  macroexpand-1 ('(vectorize ((:name a :width 4 :start 3 :inc -1)
+                              (:name b :width 4 :start 3 :inc -1)
+                              (:name c :width 4 :start 3 :inc -1))
+                     `(assert! (equalv ,a (xor2v ,b ,c)))) )
+  '(progn
+    (assert! (equalv a-3 (xor2v b-3 c-3)))
+    (assert! (equalv a-2 (xor2v b-2 c-2)))
+    (assert! (equalv a-1 (xor2v b-1 c-1)))
+    (assert! (equalv a-0 (xor2v b-0 c-0)))))
+
+
 ;; let-groups
 ;; Macro to wrap body in locally defined signal groups
 
@@ -172,5 +188,6 @@
    (test-group-getters)
    (test-unroll-groups-do-body)
    (test-unroll-groups)
+   (test-vectorize)
    (test-group-syms)
    (test-group-defs)))

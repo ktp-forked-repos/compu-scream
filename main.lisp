@@ -54,6 +54,22 @@
 (ex2)
 
 
+(def-solver ex3 all-values vector->binstr
+  ((:name a :width 4 :start 3 :inc -1)
+   (:name b :width 4 :start 3 :inc -1)
+   (:name c :width 4 :start 3 :inc -1))
+
+  (vectorize ((:name a :width 4 :start 3 :inc -1)
+              (:name b :width 4 :start 3 :inc -1)
+              (:name c :width 4 :start 3 :inc -1))
+     `(assert! (equalv ,a (xor2v ,b ,c))))
+
+  (binding-bin (:name a :width 4 :start 3 :inc -1) "1111")
+  (binding-bin (:name b :width 4 :start 3 :inc -1) "xxxx"))
+
+(ex3)
+
+
 ;; Test suite
 
 (deftest test ()
