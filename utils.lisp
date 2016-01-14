@@ -180,84 +180,6 @@
    (test-valhex-t3)
    (test-valhex-t4)))
 
-;; ADD a and b on width w
-(defun add (a b w)
-  (logand (+ a b)
-          (1- (ash 1 w))))
-
-(deftest-fun-args test-add-t1 add (14 1 4) 15)
-(deftest-fun-args test-add-t2 add (14 2 4) 0)
-(deftest-fun-args test-add-t3 add (254 1 8) 255)
-(deftest-fun-args test-add-t4 add (254 2 8) 0)
-
-(deftest test-add ()
-  (combine-results
-   (test-add-t1)
-   (test-add-t2)
-   (test-add-t3)
-   (test-add-t4)))
-
-;; ROTL and ROTR given amount of bits on x of width w
-(defun rotl (x w bits)
-  (logior (logand (ash x (mod bits w))
-                  (1- (ash 1 w)))
-          (logand (ash x (- (- w (mod bits w))))
-                  (1- (ash 1 w)))))
-
-(defun rotr (x w bits)
-  (logior (logand (ash x (- (mod bits w)))
-                  (1- (ash 1 w)))
-          (logand (ash x (- w (mod bits w)))
-                  (1- (ash 1 w)))))
-
-(deftest-fun-args test-rotl-t1 rotl (3 4 1) 6)
-(deftest-fun-args test-rotl-t2 rotl (3 4 2) 12)
-(deftest-fun-args test-rotl-t3 rotl (3 4 3) 9)
-(deftest-fun-args test-rotl-t4 rotl (3 4 4) 3)
-(deftest-fun-args test-rotr-t1 rotr (123 8 1) 189)
-(deftest-fun-args test-rotr-t2 rotr (123 8 2) 222)
-(deftest-fun-args test-rotr-t3 rotr (123 8 3) 111)
-(deftest-fun-args test-rotr-t4 rotr (123 8 4) 183)
-
-(deftest test-rot ()
-  (combine-results
-   (test-rotl-t1)
-   (test-rotl-t2)
-   (test-rotl-t3)
-   (test-rotl-t4)
-   (test-rotr-t1)
-   (test-rotr-t2)
-   (test-rotr-t3)
-   (test-rotr-t4)))
-
-;; SHL and SHR given amount of bits on x of width w
-(defun shl (x w bits)
-  (logand (ash x bits)
-          (1- (ash 1 w))))
-
-(defun shr (x w bits)
-  (shl x w (- bits)))
-
-(deftest-fun-args test-shl-t1 shl (3 4 1) 6)
-(deftest-fun-args test-shl-t2 shl (3 4 2) 12)
-(deftest-fun-args test-shl-t3 shl (3 4 3) 8)
-(deftest-fun-args test-shl-t4 shl (3 4 4) 0)
-(deftest-fun-args test-shr-t1 shr (123 8 1) 61)
-(deftest-fun-args test-shr-t2 shr (123 8 2) 30)
-(deftest-fun-args test-shr-t3 shr (123 8 3) 15)
-(deftest-fun-args test-shr-t4 shr (123 8 4) 7)
-
-(deftest test-shift ()
-  (combine-results
-   (test-shl-t1)
-   (test-shl-t2)
-   (test-shl-t3)
-   (test-shl-t4)
-   (test-shr-t1)
-   (test-shr-t2)
-   (test-shr-t3)
-   (test-shr-t4)))
-
 
 (deftest test-utils ()
   (combine-results
@@ -265,7 +187,4 @@
    (test-vecval)
    (test-vecbin)
    (test-vechex)
-   (test-valstr)
-   (test-add)
-   (test-rot)
-   (test-shift)))
+   (test-valstr)))

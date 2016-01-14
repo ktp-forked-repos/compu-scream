@@ -5,6 +5,7 @@
 (load "macros.lisp")
 (load "hexutils.lisp")
 (load "utils.lisp")
+(load "arith.lisp")
 (load "group.lisp")
 (load "solver.lisp")
 (load "binding.lisp")
@@ -81,8 +82,8 @@
   (bsig0 (:name a :width 32 :start 31 :inc -1)
          (:name b :width 32 :start 31 :inc -1))
 
-  (binding-hex (:name a :width 32 :start 31 :inc -1) "12345678")
-  (binding-hex (:name b :width 32 :start 31 :inc -1) "xxxxxxxx"))
+  (binding-hex (:name a :width 32 :start 31 :inc -1) "xxxxxxxx")
+  (binding-hex (:name b :width 32 :start 31 :inc -1) "00000001"))
 
 (ex4)
 
@@ -93,6 +94,7 @@
   (combine-results
    (test-macros)
    (test-utils)
+   (test-arith)
    (test-group)
    (test-binding)
    (test-logic-gates)
