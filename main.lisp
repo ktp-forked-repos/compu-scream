@@ -89,46 +89,60 @@
 (ex4)
 
 
-;; y = BSIG0(e) + CH(e,f,g)
+;; y = T1(e f g h k w)
 (def-solver ex5 all-values vector->hexstr
   ((:name y :width 32 :start 31 :inc -1)
    (:name e :width 32 :start 31 :inc -1)
    (:name f :width 32 :start 31 :inc -1)
-   (:name g :width 32 :start 31 :inc -1))
+   (:name g :width 32 :start 31 :inc -1)
+   (:name h :width 32 :start 31 :inc -1)
+   (:name k :width 32 :start 31 :inc -1)
+   (:name w :width 32 :start 31 :inc -1))
 
-  (let-groups ((:name ch :width 32 :start 31 :inc -1)
-               (:name bsig :width 32 :start 31 :inc -1))
+  (sha-t1 y e f g h k w)
 
-     (vectorize ((:name ch :width 32 :start 31 :inc -1)
-                 (:name e :width 32 :start 31 :inc -1)
-                 (:name f :width 32 :start 31 :inc -1)
-                 (:name g :width 32 :start 31 :inc -1))
-        `(assert! (equalv ,ch (chv ,e ,f ,g))))
-
-     (bsig0 (:name bsig :width 32 :start 31 :inc -1)
-            (:name e :width 32 :start 31 :inc -1))
-
-     (rc-adder (:name ch :width 32 :start 31 :inc -1)
-               (:name bsig :width 32 :start 31 :inc -1)
-               (:name y :width 32 :start 31 :inc -1)))
-
-  (binding-hex (:name e :width 32 :start 31 :inc -1) "12345678")
-  (binding-hex (:name f :width 32 :start 31 :inc -1) "fedcba98")
-  (binding-hex (:name g :width 32 :start 31 :inc -1) "1f2e3d4c")
+  (binding-hex (:name e :width 32 :start 31 :inc -1) "a1b2c3d4")
+  (binding-hex (:name f :width 32 :start 31 :inc -1) "19191919")
+  (binding-hex (:name g :width 32 :start 31 :inc -1) "77775555")
+  (binding-hex (:name h :width 32 :start 31 :inc -1) "aa55aa55")
+  (binding-hex (:name k :width 32 :start 31 :inc -1) "f8e7d6c5")
+  (binding-hex (:name w :width 32 :start 31 :inc -1) "12345678")
   (binding-hex (:name y :width 32 :start 31 :inc -1) "xxxxxxxx"))
 
 (ex5)
-;; -> ("85329F90:12345678:FEDCBA98:1F2E3D4C")
-;;
-;; check:
-;;
-;; (defun-hexify ytest (e f g)
-;;   (arith-add (arith-bsig0 e)
-;;              (arith-ch e f g)
-;;              32))
-;;
-;; (ytest "12345678" "FEDCBA98" "1F2E3D4C") -> "85329F90"
 
+;; test:
+(defun-hexify hex-t1 (e f g h k w)
+  (arith-add (arith-add h (arith-add (arith-bsig1 e)
+                                     (arith-ch e f g) 32) 32)
+             (arith-add k w 32) 32))
+
+;; (hex-t1 "a1b2c3d4" "19191919" "77775555" "aa55aa55" "f8e7d6c5" "12345678")
+
+
+;; y = T2(a b c)
+(def-solver ex6 all-values vector->hexstr
+  ((:name y :width 32 :start 31 :inc -1)
+   (:name a :width 32 :start 31 :inc -1)
+   (:name b :width 32 :start 31 :inc -1)
+   (:name c :width 32 :start 31 :inc -1))
+
+  (sha-t2 y a b c)
+
+  (binding-hex (:name a :width 32 :start 31 :inc -1) "a1b2c3d4")
+  (binding-hex (:name b :width 32 :start 31 :inc -1) "99999999")
+  (binding-hex (:name c :width 32 :start 31 :inc -1) "12345678")
+  (binding-hex (:name y :width 32 :start 31 :inc -1) "xxxxxxxx"))
+
+(ex6)
+
+;; test:
+(defun-hexify hex-t2 (a b c)
+  (arith-add (arith-bsig0 a)
+             (arith-maj a b c)
+             32))
+
+;; (hex-t2 "a1b2c3d4" "99999999" "12345678")
 
 ;; Test suite
 

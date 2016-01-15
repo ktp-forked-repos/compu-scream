@@ -134,6 +134,21 @@
           (arith-rotr x 32 19)
           (arith-shr x 32 10)))
 
+;; T1 = h + BSIG1(e) + CH(e,f,g) + Kt + Wt
+(defun arith-t1 (e f g h k w)
+  (arith-add (arith-add h
+                        (arith-add (arith-bsig1 e)
+                                   (arith-ch e f g)
+                                   32)
+                        32)
+             (arith-add k w 32)
+             32))
+
+;; T2 = BSIG0(a) + MAJ(a,b,c)
+(defun arith-t2 (a b c)
+  (arith-add (arith-bsig0 a)
+             (arith-maj a b c)
+             32))
 
 (deftest test-arith ()
   (combine-results

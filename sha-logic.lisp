@@ -77,6 +77,78 @@
 (mk-testcirc/groups test-ssig1-f partial-test-gen (ssig1 16) 32 32)
 (deftest-fun test-ssig1 (ssig1-output 16))
 
+;; T1 = h + BSIG1(e) + CH(e,f,g) + Kt + Wt
+;;  y   h         e       e f g    k    w
+;;
+;; ch   = CH(e,f,g)
+;; bsig = BSIG1(e)
+;; sum1 = bsig + ch
+;; sum2 = h + sum1
+;; sum3 = Kt + Wt
+;; T1   = sum2 + sum3
+(defmacro sha-t1 (y e f g h k w)
+  (let ((ch (gensym))
+        (bsig (gensym))
+        (sum1 (gensym))
+        (sum2 (gensym))
+        (sum3 (gensym)))
+
+    `(let-groups ((:name ,ch :width 32 :start 31 :inc -1)
+                  (:name ,bsig :width 32 :start 31 :inc -1)
+                  (:name ,sum1 :width 32 :start 31 :inc -1)
+                  (:name ,sum2 :width 32 :start 31 :inc -1)
+                  (:name ,sum3 :width 32 :start 31 :inc -1))
+
+       (vectorize ((:name ,ch :width 32 :start 31 :inc -1)
+                   (:name ,e :width 32 :start 31 :inc -1)
+                   (:name ,f :width 32 :start 31 :inc -1)
+                   (:name ,g :width 32 :start 31 :inc -1))
+        `(assert! (equalv ,,ch (chv ,,e ,,f ,,g))))
+
+       (bsig1 (:name ,bsig :width 32 :start 31 :inc -1)
+              (:name ,e :width 32 :start 31 :inc -1))
+
+       (rc-adder (:name ,ch :width 32 :start 31 :inc -1)
+                 (:name ,bsig :width 32 :start 31 :inc -1)
+                 (:name ,sum1 :width 32 :start 31 :inc -1))
+
+       (rc-adder (:name ,h :width 32 :start 31 :inc -1)
+                 (:name ,sum1 :width 32 :start 31 :inc -1)
+                 (:name ,sum2 :width 32 :start 31 :inc -1))
+
+       (rc-adder (:name ,k :width 32 :start 31 :inc -1)
+                 (:name ,w :width 32 :start 31 :inc -1)
+                 (:name ,sum3 :width 32 :start 31 :inc -1))
+
+       (rc-adder (:name ,sum2 :width 32 :start 31 :inc -1)
+                 (:name ,sum3 :width 32 :start 31 :inc -1)
+                 (:name ,y :width 32 :start 31 :inc -1)))))
+
+;; T2 = BSIG0(a) + MAJ(a,b,c)
+;;  y         a        a b c
+;;
+;; bsig = BSIG0(a)
+;; maj  = MAJ(a,b,c)
+(defmacro sha-t2 (y a b c)
+  (let ((bsig (gensym))
+        (maj (gensym)))
+
+    `(let-groups ((:name ,bsig :width 32 :start 31 :inc -1)
+                  (:name ,maj :width 32 :start 31 :inc -1))
+
+       (vectorize ((:name ,maj :width 32 :start 31 :inc -1)
+                   (:name ,a :width 32 :start 31 :inc -1)
+                   (:name ,b :width 32 :start 31 :inc -1)
+                   (:name ,c :width 32 :start 31 :inc -1))
+        `(assert! (equalv ,,maj (majv ,,a ,,b ,,c))))
+
+       (bsig0 (:name ,bsig :width 32 :start 31 :inc -1)
+              (:name ,a :width 32 :start 31 :inc -1))
+
+       (rc-adder (:name ,bsig :width 32 :start 31 :inc -1)
+                 (:name ,maj :width 32 :start 31 :inc -1)
+                 (:name ,y :width 32 :start 31 :inc -1)))))
+
 
 (deftest test-sha-logic ()
   (combine-results
