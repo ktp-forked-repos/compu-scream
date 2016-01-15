@@ -11,6 +11,7 @@
 (load "binding.lisp")
 (load "test-logic.lisp")
 (load "basic-logic.lisp")
+(load "sha-logic.lisp")
 
 ;; Examples where we
 ;; - declare multiple groups,
@@ -88,6 +89,47 @@
 (ex4)
 
 
+;; y = BSIG0(e) + CH(e,f,g)
+(def-solver ex5 all-values vector->hexstr
+  ((:name y :width 32 :start 31 :inc -1)
+   (:name e :width 32 :start 31 :inc -1)
+   (:name f :width 32 :start 31 :inc -1)
+   (:name g :width 32 :start 31 :inc -1))
+
+  (let-groups ((:name ch :width 32 :start 31 :inc -1)
+               (:name bsig :width 32 :start 31 :inc -1))
+
+     (vectorize ((:name ch :width 32 :start 31 :inc -1)
+                 (:name e :width 32 :start 31 :inc -1)
+                 (:name f :width 32 :start 31 :inc -1)
+                 (:name g :width 32 :start 31 :inc -1))
+        `(assert! (equalv ,ch (chv ,e ,f ,g))))
+
+     (bsig0 (:name bsig :width 32 :start 31 :inc -1)
+            (:name e :width 32 :start 31 :inc -1))
+
+     (rc-adder (:name ch :width 32 :start 31 :inc -1)
+               (:name bsig :width 32 :start 31 :inc -1)
+               (:name y :width 32 :start 31 :inc -1)))
+
+  (binding-hex (:name e :width 32 :start 31 :inc -1) "12345678")
+  (binding-hex (:name f :width 32 :start 31 :inc -1) "fedcba98")
+  (binding-hex (:name g :width 32 :start 31 :inc -1) "1f2e3d4c")
+  (binding-hex (:name y :width 32 :start 31 :inc -1) "xxxxxxxx"))
+
+(ex5)
+;; -> ("85329F90:12345678:FEDCBA98:1F2E3D4C")
+;;
+;; check:
+;;
+;; (defun-hexify ytest (e f g)
+;;   (arith-add (arith-bsig0 e)
+;;              (arith-ch e f g)
+;;              32))
+;;
+;; (ytest "12345678" "FEDCBA98" "1F2E3D4C") -> "85329F90"
+
+
 ;; Test suite
 
 (deftest test ()
@@ -98,6 +140,7 @@
    (test-group)
    (test-binding)
    (test-logic-gates)
-   (test-basic-circuits)))
+   (test-basic-logic)
+   (test-sha-logic)))
 
 (test)

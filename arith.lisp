@@ -18,6 +18,35 @@
    (test-add-t3)
    (test-add-t4)))
 
+(defun arith-ch (x y z)
+  (logxor (logand x y)
+          (logand (lognot x) z)))
+
+(deftest-fun-args test-ch-t1 arith-ch (#x96 #xAA #x55) #xC3)
+(deftest-fun-args test-ch-t2 arith-ch (#xAB #xCD #xEF) #xCD)
+(deftest-fun-args test-ch-t3 arith-ch (#x12 #x34 #x56) #x54)
+
+(deftest test-arith-ch ()
+  (combine-results
+   (test-ch-t1)
+   (test-ch-t2)
+   (test-ch-t3)))
+
+(defun arith-maj (x y z)
+  (logxor (logand x y)
+          (logand x z)
+          (logand y z)))
+
+(deftest-fun-args test-maj-t1 arith-maj (#x96 #xAA #x55) #x96)
+(deftest-fun-args test-maj-t2 arith-maj (#xAB #xCD #xEF) #xEF)
+(deftest-fun-args test-maj-t3 arith-maj (#x12 #x34 #x56) #x16)
+
+(deftest test-arith-maj ()
+  (combine-results
+   (test-maj-t1)
+   (test-maj-t2)
+   (test-maj-t3)))
+
 ;; ROTL and ROTR given amount of bits on x of width w
 (defun arith-rotl (x w bits)
   (logior (logand (ash x (mod bits w))
@@ -109,5 +138,7 @@
 (deftest test-arith ()
   (combine-results
    (test-arith-add)
+   (test-arith-ch)
+   (test-arith-maj)
    (test-arith-rot)
    (test-arith-shift)))

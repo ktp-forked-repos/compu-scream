@@ -68,6 +68,16 @@
 (defun vector->value (v)
   (vector->value-int (mapcar #'value-of v) 0))
 
+(defun hexstr->value-int (str val)
+  (if (= 0 (length str))
+      val
+      (let ((d (char str 0))
+            (r (subseq str 1)))
+        (hexstr->value-int r (+ (* 16 val) (hexchar->value d))))))
+
+(defun hexstr->value (str)
+  (hexstr->value-int (string-downcase str) 0))
+
 (defun vector->binstr (v &key (slice 4) (sep #\_))
   (let ((str (make-array (length v)
                          :element-type 'character
@@ -94,6 +104,11 @@
 (deftest-fun-args test-vecval-t5 vector->value ('(nil t)) 1)
 (deftest-fun-args test-vecval-t6 vector->value ('(t nil)) 2)
 (deftest-fun-args test-vecval-t7 vector->value ('(t t)) 3)
+
+(deftest-fun-args test-hexstr-t1 hexstr->value ("10") 16)
+(deftest-fun-args test-hexstr-t2 hexstr->value ("400") 1024)
+(deftest-fun-args test-hexstr-t3 hexstr->value ("1000000") 16777216)
+(deftest-fun-args test-hexstr-t4 hexstr->value ("aBcDEf") 11259375)
 
 (deftest-fun-args test-vecbin-t1 vector->binstr ('(nil t t nil)) "0110")
 (deftest-fun-args test-vecbin-t2 vector->binstr ('(t nil t t nil)) "1_0110")
@@ -150,6 +165,13 @@
    (test-vecval-t6)
    (test-vecval-t7)))
 
+(deftest test-hexstr ()
+  (combine-results
+   (test-hexstr-t1)
+   (test-hexstr-t2)
+   (test-hexstr-t3)
+   (test-hexstr-t4)))
+
 (deftest test-vecbin ()
   (combine-results
    (test-vecbin-t1)
@@ -185,6 +207,7 @@
   (combine-results
    (test-slice)
    (test-vecval)
+   (test-hexstr)
    (test-vecbin)
    (test-vechex)
    (test-valstr)))
