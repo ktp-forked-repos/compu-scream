@@ -185,6 +185,15 @@
 (defmacro list-groups (&rest groups)
   `(list ,@(mapcan #'group-syms groups)))
 
+(defun def-groups (&rest group-specs)
+  (mapcar #'(lambda (g)
+              (if (symbolp g)
+                  (list :name g :width 32 :start 31 :inc -1)
+                  (let ((name (car g))
+                        (width (cadr g)))
+                    (list :name name :width width
+                          :start (1- width) :inc -1))))
+          group-specs))
 
 (defmacro std-logic-vector (name width)
   `(list :name ,name :width ,width :start ,(1- width) :inc -1))

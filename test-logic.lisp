@@ -14,11 +14,11 @@
 (defun mock-group-list (arity-list)
   (let ((symbols (mock-group-symbols (length arity-list))))
     (mapcar #'(lambda (sym arity)
-                `(:name ,sym :width ,arity :start ,(1- arity) :inc -1))
+                (car (def-groups (list sym arity))))
             symbols arity-list)))
 
 (defmacro mk-testfun (name fun arity)
-  (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
+  (let ((group (car (def-groups (list 'x arity)))))
     `(def-solver ,name
        all-values
        vector->binstr
@@ -26,7 +26,7 @@
        (assert! (,fun ,@(group-syms group))))))
 
 (defmacro mk-testcirc (name fun arity)
-  (let ((group `(:name x :width ,arity :start ,(1- arity) :inc -1)))
+  (let ((group (car (def-groups (list 'x arity)))))
     `(def-solver ,name
        all-values
        vector->binstr

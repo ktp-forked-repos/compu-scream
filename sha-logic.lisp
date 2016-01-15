@@ -93,11 +93,7 @@
         (sum2 (gensym))
         (sum3 (gensym)))
 
-    `(let-groups ((:name ,ch :width 32 :start 31 :inc -1)
-                  (:name ,bsig :width 32 :start 31 :inc -1)
-                  (:name ,sum1 :width 32 :start 31 :inc -1)
-                  (:name ,sum2 :width 32 :start 31 :inc -1)
-                  (:name ,sum3 :width 32 :start 31 :inc -1))
+    `(let-groups ,(def-groups ch bsig sum1 sum2 sum3)
 
        (vectorize ((:name ,ch :width 32 :start 31 :inc -1)
                    (:name ,e :width 32 :start 31 :inc -1)
@@ -108,21 +104,10 @@
        (bsig1 (:name ,bsig :width 32 :start 31 :inc -1)
               (:name ,e :width 32 :start 31 :inc -1))
 
-       (rc-adder (:name ,ch :width 32 :start 31 :inc -1)
-                 (:name ,bsig :width 32 :start 31 :inc -1)
-                 (:name ,sum1 :width 32 :start 31 :inc -1))
-
-       (rc-adder (:name ,h :width 32 :start 31 :inc -1)
-                 (:name ,sum1 :width 32 :start 31 :inc -1)
-                 (:name ,sum2 :width 32 :start 31 :inc -1))
-
-       (rc-adder (:name ,k :width 32 :start 31 :inc -1)
-                 (:name ,w :width 32 :start 31 :inc -1)
-                 (:name ,sum3 :width 32 :start 31 :inc -1))
-
-       (rc-adder (:name ,sum2 :width 32 :start 31 :inc -1)
-                 (:name ,sum3 :width 32 :start 31 :inc -1)
-                 (:name ,y :width 32 :start 31 :inc -1)))))
+       (adder32 ,ch ,bsig ,sum1)
+       (adder32 ,h ,sum1 ,sum2)
+       (adder32 ,k ,w ,sum3)
+       (adder32 ,sum2 ,sum3 ,y))))
 
 ;; T2 = BSIG0(a) + MAJ(a,b,c)
 ;;  y         a        a b c
@@ -133,8 +118,7 @@
   (let ((bsig (gensym))
         (maj (gensym)))
 
-    `(let-groups ((:name ,bsig :width 32 :start 31 :inc -1)
-                  (:name ,maj :width 32 :start 31 :inc -1))
+    `(let-groups ,(def-groups bsig maj)
 
        (vectorize ((:name ,maj :width 32 :start 31 :inc -1)
                    (:name ,a :width 32 :start 31 :inc -1)
@@ -145,9 +129,55 @@
        (bsig0 (:name ,bsig :width 32 :start 31 :inc -1)
               (:name ,a :width 32 :start 31 :inc -1))
 
-       (rc-adder (:name ,bsig :width 32 :start 31 :inc -1)
-                 (:name ,maj :width 32 :start 31 :inc -1)
-                 (:name ,y :width 32 :start 31 :inc -1)))))
+       (adder32 ,bsig ,maj ,y))))
+
+;; generate constraints for a row of the SHA computation table
+;; t = 0..63
+;; T1[t] = e[t-4] + BSIG1(e[t-1]) + CH(e[t-1], e[t-2], e[t-3]) + K[t] + W[t]
+;; T2[t] = BSIG0(a[t-1]) + MAJ(a[t-1], a[t-2], a[t-3])
+;; a[t] = T1[t] + T2[t]
+;; e[t] = a[t-4] + T1[t]
+
+;; generate corresponding symbol with index [i-z] for a[i] and e[i]
+;; handle special cases where i-z < 0
+(defun mk-sym-z (g i z)
+  (cond ((= i 0) (cond ((= z 1) (if (eql g 'a) 'h-0 'h-4))
+                       ((= z 2) (if (eql g 'a) 'h-1 'h-5))
+                       ((= z 3) (if (eql g 'a) 'h-2 'h-6))
+                       ((= z 4) (if (eql g 'a) 'h-3 'h-7))))
+        ((= i 1) (cond ((= z 1) (mk-signal-sym g 0))
+                       ((= z 2) (if (eql g 'a) 'h-0 'h-4))
+                       ((= z 3) (if (eql g 'a) 'h-1 'h-5))
+                       ((= z 4) (if (eql g 'a) 'h-2 'h-6))))
+        ((= i 2) (cond ((= z 1) (mk-signal-sym g 1))
+                       ((= z 2) (mk-signal-sym g 0))
+                       ((= z 3) (if (eql g 'a) 'h-0 'h-4))
+                       ((= z 4) (if (eql g 'a) 'h-1 'h-5))))
+        ((= i 3) (cond ((= z 1) (mk-signal-sym g 2))
+                       ((= z 2) (mk-signal-sym g 1))
+                       ((= z 3) (mk-signal-sym g 0))
+                       ((= z 4) (if (eql g 'a) 'h-0 'h-4))))
+        (t       (mk-signal-sym g (- i z)))))
+
+(defmacro sha-row (i)
+  (let ((a (mk-signal-sym 'a i))
+        (az1 (mk-sym-z 'a i 1))
+        (az2 (mk-sym-z 'a i 2))
+        (az3 (mk-sym-z 'a i 3))
+        (az4 (mk-sym-z 'a i 4))
+        (e (mk-signal-sym 'e i))
+        (ez1 (mk-sym-z 'e i 1))
+        (ez2 (mk-sym-z 'e i 2))
+        (ez3 (mk-sym-z 'e i 3))
+        (ez4 (mk-sym-z 'e i 4))
+        (t1 (mk-signal-sym 't1 i))
+        (t2 (mk-signal-sym 't2 i))
+        (k (mk-signal-sym 'k i))
+        (w (mk-signal-sym 'w i)))
+    `(progn (sha-t1 ,t1 ,ez1 ,ez2 ,ez3 ,ez4 ,k ,w)
+            (sha-t2 ,t2 ,az1 ,az2 ,az3)
+            (adder32 ,t1 ,t2 ,a)
+            (adder32 ,az4 ,t1 ,e))))
 
 
 (deftest test-sha-logic ()

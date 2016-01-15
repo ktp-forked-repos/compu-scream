@@ -150,6 +150,18 @@
              (arith-maj a b c)
              32))
 
+;; Ai = T1 + T2
+;; Ei = D(i-1) + T1
+(defun arith-sha-row (az1 az2 az3 az4 ez1 ez2 ez3 ez4 k w)
+  (let* ((t1 (arith-t1 ez1 ez2 ez3 ez4 k w))
+         (t2 (arith-t2 az1 az2 az3))
+         (a (arith-add t1 t2 32))
+         (e (arith-add az4 t1 32)))
+    (+ (ash t1 96)
+       (ash t2 64)
+       (ash a 32)
+       e)))
+
 (deftest test-arith ()
   (combine-results
    (test-arith-add)

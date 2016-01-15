@@ -106,6 +106,12 @@
                         c
                         (group-name s)))))
 
+;; 32-bit adder with only group symbols as input
+(defmacro adder32 (a b s)
+  `(rc-adder (:name ,a :width 32 :start 31 :inc -1)
+             (:name ,b :width 32 :start 31 :inc -1)
+             (:name ,s :width 32 :start 31 :inc -1)))
+
 (mk-testcirc/groups test-rc-adder3-f rc-adder () 3 3 3)
 (mk-testcirc/groups test-rc-adder4-f rc-adder () 4 4 4)
 (mk-testcirc/groups test-rc-adder5-f rc-adder () 5 5 5)

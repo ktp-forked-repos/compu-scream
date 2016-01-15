@@ -20,7 +20,8 @@
                            vector-formatter
                            groups
                            &body constraints)
-  (let ((solver-inner (def-solver-inner solver-extent groups constraints)))
+  (let* ((groups (if (symbolp (car groups)) (eval groups) groups))
+         (solver-inner (def-solver-inner solver-extent groups constraints)))
     `(defun ,name ()
        (sort
         ,(if (eq 'all-values solver-extent)
