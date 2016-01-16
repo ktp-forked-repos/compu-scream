@@ -179,6 +179,31 @@
             (adder32 ,t1 ,t2 ,a)
             (adder32 ,az4 ,t1 ,e))))
 
+;; generate constraints for the SHA message schedule, i = 16..63
+;; Wt = SSIG1(W(t-2)) + W(t-7) + SSIG0(w(t-15)) + W(t-16)
+(defmacro sha-msg-sched (i)
+  (let ((wi (mk-signal-sym 'w i))
+        (wiz2 (mk-signal-sym 'w (- i 2)))
+        (wiz7 (mk-signal-sym 'w (- i 7)))
+        (wiz15 (mk-signal-sym 'w (- i 15)))
+        (wiz16 (mk-signal-sym 'w (- i 16)))
+        (ssig0 (gensym))
+        (ssig1 (gensym))
+        (sum1 (gensym))
+        (sum2 (gensym)))
+
+    `(let-groups ,(def-groups ssig0 ssig1 sum1 sum2)
+
+       (ssig1 (:name ,ssig1 :width 32 :start 31 :inc -1)
+              (:name ,wiz2 :width 32 :start 31 :inc -1))
+       (adder32 ,ssig1 ,wiz7 ,sum1)
+
+       (ssig0 (:name ,ssig0 :width 32 :start 31 :inc -1)
+              (:name ,wiz15 :width 32 :start 31 :inc -1))
+       (adder32 ,ssig0 ,wiz16 ,sum2)
+
+       (adder32 ,sum2 ,sum1 ,wi))))
+
 
 (deftest test-sha-logic ()
   (combine-results

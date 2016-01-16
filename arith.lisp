@@ -162,6 +162,24 @@
        (ash a 32)
        e)))
 
+(defun arith-wt (wiz2 wiz7 wiz15 wiz16)
+  (arith-add (arith-add (arith-ssig1 wiz2) wiz7 32)
+             (arith-add (arith-ssig0 wiz15) wiz16 32)
+             32))
+
+(defun arith-sha-msg-sched (&rest msg)
+  (let ((w (make-array 64 :element-type 'integer)))
+    (do ((i 0 (1+ i))
+         (m msg (cdr m)))
+        ((= i 64) w)
+      (if (< i 16)
+          (if m (setf (aref w i) (car m)))
+          (setf (aref w i) (arith-wt (aref w (- i 2))
+                                     (aref w (- i 7))
+                                     (aref w (- i 15))
+                                     (aref w (- i 16))))))))
+
+
 (deftest test-arith ()
   (combine-results
    (test-arith-add)
