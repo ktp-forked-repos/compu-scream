@@ -148,17 +148,10 @@
 
   (sha-row 0)
 
-  (binding-hex (:name h-0 :width 32 :start 31 :inc -1) "6a09e667")
-  (binding-hex (:name h-1 :width 32 :start 31 :inc -1) "bb67ae85")
-  (binding-hex (:name h-2 :width 32 :start 31 :inc -1) "3c6ef372")
-  (binding-hex (:name h-3 :width 32 :start 31 :inc -1) "a54ff53a")
-  (binding-hex (:name h-4 :width 32 :start 31 :inc -1) "510e527f")
-  (binding-hex (:name h-5 :width 32 :start 31 :inc -1) "9b05688c")
-  (binding-hex (:name h-6 :width 32 :start 31 :inc -1) "1f83d9ab")
-  (binding-hex (:name h-7 :width 32 :start 31 :inc -1) "5be0cd19")
-
-  (binding-hex (:name k-0 :width 32 :start 31 :inc -1) "428a2f98")
-  (binding-hex (:name w-0 :width 32 :start 31 :inc -1) "12345678"))
+  (const-groups (h-0 "6a09e667") (h-1 "bb67ae85") (h-2 "3c6ef372") (h-3 "a54ff53a")
+                (h-4 "510e527f") (h-5 "9b05688c") (h-6 "1f83d9ab") (h-7 "5be0cd19"))
+  (const-groups (k-0 "428a2f98"))
+  (const-groups (w-0 "12345678")))
 
 (ex7)
 

@@ -36,6 +36,13 @@
   (let ((bindctl (bindstr-hex->bin (filter-bindstr bindstr))))
     `(progn ,@(binding-body a bindctl))))
 
+(defmacro const-groups (&rest const-specs)
+  `(progn ,@(mapcar #'(lambda (spec)
+                        (let ((grp (car spec))
+                              (hex (cadr spec)))
+                          `(binding-hex (:name ,grp :width 32 :start 31 :inc -1) ,hex)))
+                    const-specs)))
+
 ;; test macroexpansions
 
 (deftest-fun-args test-binding-body
