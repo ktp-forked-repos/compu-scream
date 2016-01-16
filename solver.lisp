@@ -6,15 +6,15 @@
 ;; define a function to solve a constraint problem on given groups
 ;; constrained by given constraint-forms
 (defun def-solver-inner (solver-extent groups constraints)
-  `(,solver-extent
-    (solution
-     (let-groups ,groups
-        ,@constraints
-        (list-groups ,@groups))
-     (reorder #'domain-size
-              #'(lambda (x) (declare (ignore x)) nil)
-              #'<
-              #'linear-force))))
+  `(let-groups ,groups
+      ,@constraints
+      (,solver-extent
+       (solution
+        (list-groups ,@groups)
+        (reorder #'domain-size
+                 #'(lambda (x) (declare (ignore x)) nil)
+                 #'<
+                 #'linear-force)))))
 
 (defmacro def-solver (name solver-extent
                            vector-formatter
@@ -28,3 +28,14 @@
              `(mapcar #',vector-formatter ,solver-inner)
              `(list (,vector-formatter ,solver-inner)))
        #'string<))))
+
+
+(defmacro def-solver-lite (name solver-extent
+                           vector-formatter
+                           groups
+                           &body constraints)
+  (let* ((groups (if (symbolp (car groups)) (eval groups) groups)))
+    `(defun ,name ()
+       (let-groups ,groups
+          ,@constraints
+          (list-groups ,@groups)))))

@@ -32,16 +32,18 @@
 
 
 (defun triples (n)
-  (all-values
-   (solution
-    (let ((a (an-integer-betweenv 1 n))
-          (b (an-integer-betweenv 1 n))
-          (c (an-integer-betweenv 1 n)))
-      (assert! (=v (+v (*v a a) (*v b b)) (*v c c)))
-      (list a b c))
-    (reorder #'range-size
-             #'(lambda (x) (< x 1e-6))
-             #'>
-             #'divide-and-conquer-force))))
+  (let ((a (an-integer-betweenv 1 n))
+        (b (an-integer-betweenv 1 n))
+        (c (an-integer-betweenv 1 n)))
+    (format t "assertions start~%")
+    (assert! (=v (+v (*v a a) (*v b b)) (*v c c)))
+    (format t "assertions finish~%")
+    (all-values
+     (solution
+      (list a b c)
+      (reorder #'range-size
+               #'(lambda (x) (< x 1e-6))
+               #'>
+               #'divide-and-conquer-force)))))
 
 (time (triples 500))

@@ -195,6 +195,13 @@
                           :start (1- width) :inc -1))))
           group-specs))
 
+(defmacro def-global-groups (&rest groups)
+  (let ((list nil))
+    (dolist (g groups)
+      (dotimes (i 32)
+        (setf list (cons `(defvar ,(mk-signal-sym g i) (a-booleanv)) list))))
+    `(progn ,@list)))
+
 (defmacro std-logic-vector (name width)
   `(list :name ,name :width ,width :start ,(1- width) :inc -1))
 
