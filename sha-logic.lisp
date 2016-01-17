@@ -244,6 +244,27 @@
                  (k-56 "748f82ee") (k-57 "78a5636f") (k-58 "84c87814") (k-59 "8cc70208")
                  (k-60 "90befffa") (k-61 "a4506ceb") (k-62 "bef9a3f7") (k-63 "c67178f2")))
 
+;; Formatting utilities for generating debug output
+
+(defmacro printg (&rest groups)
+  `(vector->hexstr (list-global-groups ,@groups)))
+
+(defmacro print-sha-row (i)
+  (let ((a (mk-signal-sym 'a i))
+        (az1 (mk-sym-z 'a i 1))
+        (az2 (mk-sym-z 'a i 2))
+        (az3 (mk-sym-z 'a i 3))
+        (e (mk-signal-sym 'e i))
+        (ez1 (mk-sym-z 'e i 1))
+        (ez2 (mk-sym-z 'e i 2))
+        (ez3 (mk-sym-z 'e i 3))
+        (t1 (mk-signal-sym 't1 i))
+        (t2 (mk-signal-sym 't2 i))
+        (w (mk-signal-sym 'w i)))
+    `(format t "~a~%" (printg ,w ,t1 ,t2 ,a ,az1 ,az2 ,az3 ,e ,ez1 ,ez2 ,ez3))))
+
+
+
 (deftest test-sha-logic ()
   (combine-results
    (test-bsig0)

@@ -1,6 +1,15 @@
 (require :screamer)
 (in-package :screamer-user)
 
+(defun undeterministic-nibble-vector->hexchar (n)
+  (let* ((m (mapcar #'value-of n))
+         (undet-count (length (remove t (remove nil m)))))
+    (cond ((= undet-count 0) (nibble-vector->hexchar m))
+          ((= undet-count 1) #\_)
+          ((= undet-count 2) #\^)
+          ((= undet-count 3) #\~)
+          ((= undet-count 4) #\*))))
+
 (defun nibble-vector->hexchar (n)
   (cond ((equal n '(            nil)) #\0)
         ((equal n '(              t)) #\1)

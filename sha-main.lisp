@@ -15,6 +15,8 @@
 (load "basic-logic.lisp")
 (load "sha-logic.lisp")
 
+;; set up the SHA256 problem constraints
+
 (def-global-groups (h 8) (k 64) (w 64) (t1 64) (t2 64) (a 64) (e 64) (sha 8))
 
 (sha-const-k)
@@ -28,16 +30,35 @@
               (w-8 "80000000") (w-9 "00000000") (w-10 "00000000") (w-11 "00000000")
               (w-12 "00000000") (w-13 "00000000") (w-14 "00000000") (w-15 "00000100"))
 
+;(const-groups (sha-0 "00000000") (sha-1 "00000000") (sha-2 "00000000") (sha-3 "00000000")
+;              (sha-4 "00000000") (sha-5 "00000000") (sha-6 "00000000") (sha-7 "000000ff"))
+
+;(const-groups (sha-0 "4018A290") (sha-1 "7717832B") (sha-2 "F7C8D1DC") (sha-3 "112CBFF0")
+;              (sha-4 "1F71ABCC") (sha-5 "C7BB73B7") (sha-6 "3C111D91") (sha-7 "9444E5C1"))
+
 (sha-logic-constraints)
 
+; (printg w-0 w-1 w-2 w-3 w-4 w-5 w-6 w-7)
+; (printg w-8 w-9 w-10 w-11 w-12 w-13 w-14 w-15)
+; (printg w-56 w-57 w-58 w-59 w-60 w-61 w-62 w-63)
+
+; (printg h-0 h-1 h-2 h-3 h-4 h-5 h-6 h-7)
+; (format t "   W    :   T1   :   T2   :   Ai   :   Ai1  :   Ai2  :  Ai3   :   Ei   :   Ei1  :   Ei2  :   Ei3  ~%")
+; (sha-unroll print-sha-row 0 63)
+; (printg sha-0 sha-1 sha-2 sha-3 sha-4 sha-5 sha-6 sha-7)
+
 ;; create a solver on the problem bits
-(sort
- (mapcar #'vector->hexstr
-         (all-values
-          (solution
-           (list-global-groups sha-0 sha-1 sha-2 sha-3 sha-4 sha-5 sha-6 sha-7)
-           #'linear-force)))
- #'string<)
+(vector->hexstr
+ (one-value
+  (solution
+   (list-global-groups sha-0 sha-1 sha-2 sha-3 sha-4 sha-5 sha-6 sha-7)
+   (static-ordering #'divide-and-conquer-force))))
+;;;;;;;;;;
+;   (reorder #'domain-size
+;            #'(lambda (x) (declare (ignore x)) nil)
+;            #'<
+;            #'linear-force))))
+
 
 ;; ("4018A290:7717832B:F7C8D1DC:112CBFF0:1F71ABCC:C7BB73B7:3C111D91:9444E5C1")
 

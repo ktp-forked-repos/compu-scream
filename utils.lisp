@@ -81,6 +81,7 @@
 (defun vector->binstr (v &key (slice 4) (sep #\_))
   (let ((str (make-array (length v)
                          :element-type 'character
+                         ;; TODO handle nondetermined value
                          :initial-contents (mapcar #'(lambda (b) (if b #\1 #\0)) v))))
     (slice-string str slice sep)))
 
@@ -88,7 +89,7 @@
   (let* ((slice-list (slice-seq v (length v) 4 nil)) ; cut vector into nibbles
          (str (make-array (length slice-list)
                           :element-type 'character
-                          :initial-contents (mapcar #'nibble-vector->hexchar
+                          :initial-contents (mapcar #'undeterministic-nibble-vector->hexchar
                                                     slice-list))))
     (slice-string str slice sep)))
 
