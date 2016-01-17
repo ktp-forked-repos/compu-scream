@@ -216,7 +216,16 @@
 
 (sha-msg-sched 16) (sha-msg-sched 17) (sha-msg-sched 18) (sha-msg-sched 19)
 (sha-row 0)
-;; TODO we need to create a solver on the problem bits (ie. the nonce)
+
+;; create a solver on the problem bits
+;; TODO macro def-global-solver
+(sort
+ (mapcar #'vector->hexstr
+         (all-values
+          (solution
+           (list-global-groups a-0 e-0)
+           #'linear-force)))
+ #'string<)
 
 
 ;; (ex8)

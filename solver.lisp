@@ -27,15 +27,4 @@
         ,(if (eq 'all-values solver-extent)
              `(mapcar #',vector-formatter ,solver-inner)
              `(list (,vector-formatter ,solver-inner)))
-       #'string<))))
-
-
-(defmacro def-solver-lite (name solver-extent
-                           vector-formatter
-                           groups
-                           &body constraints)
-  (let* ((groups (if (symbolp (car groups)) (eval groups) groups)))
-    `(defun ,name ()
-       (let-groups ,groups
-          ,@constraints
-          (list-groups ,@groups)))))
+        #'string<))))

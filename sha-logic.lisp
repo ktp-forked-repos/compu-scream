@@ -204,6 +204,45 @@
 
        (adder32 ,sum2 ,sum1 ,wi))))
 
+(defmacro sha-out-adders ()
+  `(progn (adder32 h-0 a-63 sha-0)
+          (adder32 h-1 a-62 sha-1)
+          (adder32 h-2 a-61 sha-2)
+          (adder32 h-3 a-60 sha-3)
+          (adder32 h-4 e-63 sha-4)
+          (adder32 h-5 e-62 sha-5)
+          (adder32 h-6 e-61 sha-6)
+          (adder32 h-7 e-60 sha-7)))
+
+(defmacro sha-logic-constraints ()
+  `(progn (sha-unroll sha-msg-sched 16 63)
+          (sha-unroll sha-row 0 63)
+          (sha-out-adders)))
+
+
+(defmacro sha-unroll (sha-form start end) ;; range inclusive!
+  (do ((i start (1+ i))
+       (body nil))
+      ((> i end) `(progn ,@(nreverse body)))
+    (setf body (cons `(,sha-form ,i) body))))
+
+(defmacro sha-const-k ()
+  `(const-groups (k-0 "428a2f98") (k-1 "71374491") (k-2 "b5c0fbcf") (k-3 "e9b5dba5")
+                 (k-4 "3956c25b") (k-5 "59f111f1") (k-6 "923f82a4") (k-7 "ab1c5ed5")
+                 (k-8 "d807aa98") (k-9 "12835b01") (k-10 "243185be") (k-11 "550c7dc3")
+                 (k-12 "72be5d74") (k-13 "80deb1fe") (k-14 "9bdc06a7") (k-15 "c19bf174")
+                 (k-16 "e49b69c1") (k-17 "efbe4786") (k-18 "0fc19dc6") (k-19 "240ca1cc")
+                 (k-20 "2de92c6f") (k-21 "4a7484aa") (k-22 "5cb0a9dc") (k-23 "76f988da")
+                 (k-24 "983e5152") (k-25 "a831c66d") (k-26 "b00327c8") (k-27 "bf597fc7")
+                 (k-28 "c6e00bf3") (k-29 "d5a79147") (k-30 "06ca6351") (k-31 "14292967")
+                 (k-32 "27b70a85") (k-33 "2e1b2138") (k-34 "4d2c6dfc") (k-35 "53380d13")
+                 (k-36 "650a7354") (k-37 "766a0abb") (k-38 "81c2c92e") (k-39 "92722c85")
+                 (k-40 "a2bfe8a1") (k-41 "a81a664b") (k-42 "c24b8b70") (k-43 "c76c51a3")
+                 (k-44 "d192e819") (k-45 "d6990624") (k-46 "f40e3585") (k-47 "106aa070")
+                 (k-48 "19a4c116") (k-49 "1e376c08") (k-50 "2748774c") (k-51 "34b0bcb5")
+                 (k-52 "391c0cb3") (k-53 "4ed8aa4a") (k-54 "5b9cca4f") (k-55 "682e6ff3")
+                 (k-56 "748f82ee") (k-57 "78a5636f") (k-58 "84c87814") (k-59 "8cc70208")
+                 (k-60 "90befffa") (k-61 "a4506ceb") (k-62 "bef9a3f7") (k-63 "c67178f2")))
 
 (deftest test-sha-logic ()
   (combine-results
