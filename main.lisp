@@ -101,7 +101,7 @@
 
   (sha-t1 y e f g h k w))
 
-(ex5)
+;; (ex5)
 
 ;; test:
 (defun-hexify hex-t1 (e f g h k w)
@@ -121,7 +121,7 @@
                 (y "xxxxxxxx"))
   (sha-t2 y a b c))
 
-(ex6)
+;; (ex6)
 
 ;; test:
 (defun-hexify hex-t2 (a b c)
@@ -173,74 +173,6 @@
              "510e527f" "9b05688c" "1f83d9ab" "5be0cd19"
              "428a2f98" "12345678")
 ;; -> "05AC43E0:08909AE5:0E3CDEC5:AAFC391A"
-
-;; SHA row with message schedule
-(def-solver-lite ex8 all-values vector->hexstr
-  (def-groups
-    'h-0 'h-1 'h-2 'h-3 'h-4 'h-5 'h-6 'h-7
-    'k-0
-    'w-0 'w-1 'w-2 'w-3 'w-4 'w-5 'w-6 'w-7
-    'w-8 'w-9 'w-10 'w-11 'w-12 'w-13 'w-14 'w-15
-    'w-16 'w-17 'w-18 'w-19
-    't1-0 't2-0
-    'a-0 'e-0)
-
-  (const-groups (h-0 "6a09e667") (h-1 "bb67ae85") (h-2 "3c6ef372") (h-3 "a54ff53a")
-                (h-4 "510e527f") (h-5 "9b05688c") (h-6 "1f83d9ab") (h-7 "5be0cd19"))
-  (const-groups (k-0 "428a2f98"))
-
-  (const-groups (w-0 "00000001") (w-1 "00000002") (w-2 "00000003") (w-3 "00000000")
-                (w-4 "00000000") (w-5 "00000000") (w-6 "00000000") (w-7 "00000000")
-                (w-8 "00000000") (w-9 "00000000") (w-10 "00000000") (w-11 "00000000")
-                (w-12 "00000000") (w-13 "00000000") (w-14 "00000000") (w-15 "00000000"))
-
-  (sha-msg-sched 16) (sha-msg-sched 17) (sha-msg-sched 18) (sha-msg-sched 19)
-  (sha-row 0))
-
-;; try something out of the scope of solver...
-(def-global-groups h-0 h-1 h-2 h-3 h-4 h-5 h-6 h-7
-                   k-0
-                   w-0 w-1 w-2 w-3 w-4 w-5 w-6 w-7
-                   w-8 w-9 w-10 w-11 w-12 w-13 w-14 w-15
-                   w-16 w-17 w-18 w-19
-                   t1-0 t2-0
-                   a-0 e-0)
-(const-groups (h-0 "6a09e667") (h-1 "bb67ae85") (h-2 "3c6ef372") (h-3 "a54ff53a")
-              (h-4 "510e527f") (h-5 "9b05688c") (h-6 "1f83d9ab") (h-7 "5be0cd19"))
-(const-groups (k-0 "428a2f98"))
-
-(const-groups (w-0 "00000001") (w-1 "00000002") (w-2 "00000003") (w-3 "00000000")
-              (w-4 "00000000") (w-5 "00000000") (w-6 "00000000") (w-7 "00000000")
-              (w-8 "00000000") (w-9 "00000000") (w-10 "00000000") (w-11 "00000000")
-              (w-12 "00000000") (w-13 "00000000") (w-14 "00000000") (w-15 "00000000"))
-
-(sha-msg-sched 16) (sha-msg-sched 17) (sha-msg-sched 18) (sha-msg-sched 19)
-(sha-row 0)
-
-;; create a solver on the problem bits
-;; TODO macro def-global-solver
-(sort
- (mapcar #'vector->hexstr
-         (all-values
-          (solution
-           (list-global-groups a-0 e-0)
-           #'linear-force)))
- #'string<)
-
-
-;; (ex8)
-
-(defun-hexify hex-sha-msg-sched (msg)
-  (let ((w (make-array 64 :element-type 'integer)))
-    (do ((i 0 (1+ i))
-         (m msg (cdr m)))
-        ((= i 64) w)
-      (if (< i 16)
-          (if m (setf (aref w i) (car m)))
-          (setf (aref w i) (arith-wt (aref w (- i 2))
-                                     (aref w (- i 7))
-                                     (aref w (- i 15))
-                                     (aref w (- i 16))))))))
 
 
 ;; Test suite

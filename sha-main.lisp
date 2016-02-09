@@ -53,14 +53,9 @@
   (solution
    (list-global-groups sha-0 sha-1 sha-2 sha-3 sha-4 sha-5 sha-6 sha-7)
    (static-ordering #'divide-and-conquer-force))))
-;;;;;;;;;;
-;   (reorder #'domain-size
-;            #'(lambda (x) (declare (ignore x)) nil)
-;            #'<
-;            #'linear-force))))
-
 
 ;; ("4018A290:7717832B:F7C8D1DC:112CBFF0:1F71ABCC:C7BB73B7:3C111D91:9444E5C1")
 
+;; which is correct:
 ;; $ echo -n 'abcdefghijklmnopqrstuvwx01234567' | sha256sum
 ;; 4018a2907717832bf7c8d1dc112cbff01f71abccc7bb73b73c111d919444e5c1  -
